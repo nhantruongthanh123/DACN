@@ -69,6 +69,12 @@ Run first block code to extract data into data/processed/df_final_prepared.csv
 
 Run second block code to build model base on features: num_of_prev_attempts, studied_credits, is_Risk, Avg_Coursework_Score,  Total_late_days, Submitted_assignments,First_Assessment_Score, Total_clicks, Active_days, Forum_clicks, Click_Momentum 
 
+The model will be saved in models/xgboost_model.json
+
+File notebooks/02_test_model.ipynb can be used to test model with new data.
+
+File notebooks/03_explainable.ipynb can be used to explain model prediction with SHAP and counterfactual analysis.
+
 
 ```
 ## Dataset Reference
