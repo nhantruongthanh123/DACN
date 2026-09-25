@@ -1,95 +1,95 @@
-﻿course_id,course_code,course_name,credits
-1,CH1003,Hóa đại cương,3
-2,CO1005,Nhập môn Điện toán,3
-3,CO1007,Cấu trúc Rời rạc cho Khoa học Máy tính,4
-4,CO1023,Hệ thống số,3
-5,CO1027,Kỹ thuật Lập trình,3
-6,CO2001,Kỹ năng Chuyên nghiệp cho Kỹ sư,3
-7,CO2003,Cấu trúc Dữ liệu và Giải Thuật,4
-8,CO2007,Kiến trúc Máy tính,4
-9,CO2011,Mô hình hóa Toán học,3
-10,CO2013,Hệ cơ sở Dữ liệu,4
-11,CO2017,Hệ điều hành,3
-12,CO2039,Lập trình Nâng cao,3
-13,CO3001,Công nghệ Phần mềm,3
-14,CO3005,Nguyên lý Ngôn ngữ Lập trình,4
-15,CO3011,Quản lý Dự án Phần mềm,3
-16,CO3013,Xây dựng Chương trình Dịch,3
-17,CO3015,Kiểm tra Phần mềm,3
-18,CO3017,Kiến trúc Phần mềm,3
-19,CO3021,Hệ Quản trị Cơ sở Dữ Liệu,3
-20,CO3023,Cơ sở Dữ liệu Phân tán và Hướng đối tượng,3
-21,CO3027,Thương mại Điện tử,3
-22,CO3029,Khai phá Dữ liệu,3
-23,CO3031,Phân tích và Thiết kế Giải Thuật,3
-24,CO3033,Bảo mật Hệ thống Thông tin,3
-25,CO3035,Hệ thời gian thực,3
-26,CO3037,Phát triển Ứng dụng Internet of Things,3
-27,CO3041,Hệ thống Thông minh,3
-28,CO3043,Phát triển Ứng dụng trên Thiết bị Di động,3
-29,CO3045,Lập trình Game,3
-30,CO3047,Mạng máy tính nâng cao,3
-31,CO3049,Lập trình Web,3
-32,CO3051,Hệ thống thiết bị di động,3
-33,CO3057,Xử lý Ảnh số và Thị giác Máy tính,3
-34,CO3059,Đồ họa Máy tính,3
-35,CO3061,Nhập môn Trí tuệ Nhân tạo,3
-36,CO3065,Công nghệ Phần mềm Nâng cao,3
-37,CO3067,Tính toán Song song,3
-38,CO3069,Mật mã và An ninh mạng,3
-39,CO3071,Hệ phân bố,3
-40,CO3083,Mật mã học và Mã hóa Thông tin,3
-41,CO3085,Xử lý Ngôn ngữ Tự nhiên,3
-42,CO3089,Những Chủ đề Nâng cao trong Khoa học Máy tính,3
-43,CO3093,Mạng máy tính,3
-44,CO3101,Đồ án Tổng hợp - Hướng Trí tuệ Nhân tạo,1
-45,CO3103,Đồ án Tổng hợp - hướng Công nghệ Phần mềm,1
-46,CO3105,Đồ án Tổng hợp - Hướng Hệ thống Thông tin,1
-47,CO3107,Thực tập Đồ án môn học Đa ngành - Hướng Trí tuệ Nhân tạo,1
-48,CO3109,Thực tập Đồ án môn học Đa ngành - Hướng công Nghệ phần mềm,1
-49,CO3111,Thực tập Đồ án môn học Đa ngành - hướng Hệ thống Thông tin,1
-50,CO3115,Phân tích và Thiết kế Hệ thống,3
-51,CO3117,Học máy,3
-52,CO3119,Đồ án Mạng máy tính,1
-53,CO3127,Đồ án tổng hợp - hướng kỹ thuật dữ liệu,1
-54,CO3129,Bảo mật Phần mềm,3
-55,CO3131,Công nghệ Phần mềm thế hệ mới,3
-56,CO3133,Học sâu và Ứng dụng,3
-57,CO3135,Lập trình cho Trí tuệ nhân tạo và Khoa học dữ liệu,3
-58,CO3137,Dữ liệu lớn,3
-59,CO3139,Chuyển đổi số,3
-60,CO3151,Quản trị mạng,3
-61,CO3153,Đánh giá an toàn mạng máy tính,3
-62,CO3335,Thực tập Ngoài trường,2
-63,CO4025,Mạng xã hội và Thông tin,3
-64,CO4029,Đồ án Chuyên ngành,2
-65,CO4031,Kho dữ Liệu và Hệ hỗ trợ Quyết định,3
-66,CO4033,Phân tích Dữ liệu lớn và Trí tuệ Kinh doanh,3
-67,CO4035,Hệ hoạch Định tài Nguyên tổ chức,3
-68,CO4037,Hệ thống thông tin quản lý,3
-69,CO4039,Bảo mật sinh trắc,3
-70,CO4337,Đồ án Tốt nghiệp (Khoa học Máy tính),4
-71,IM1013,Kinh tế học Đại cương,3
-72,IM1023,Quản lý Sản xuất cho Kỹ sư,3
-73,IM1025,Quản lý Dự án cho Kỹ sư,3
-74,IM1027,Kinh tế Kỹ thuật,3
-75,IM3001,Quản trị Kinh doanh cho Kỹ sư,3
-76,LA1003,Anh văn 1,2
-77,LA1005,Anh văn 2,2
-78,LA1007,Anh văn 3,2
-79,LA1009,Anh văn 4,2
-80,MI1003,Giáo dục Quốc phòng,0
-81,MT1003,Giải tích 1,4
-82,MT1005,Giải tích 2,4
-83,MT1007,Đại số Tuyến tính,3
-84,MT2013,Xác suất và Thống kê,4
-85,PE1003,Giáo dục thể chất 1,0
-86,PE1005,Giáo dục thể chất 2,0
-87,PH1003,Vật lý 1,4
-88,PH1007,Thí nghiệm Vật lý,1
-89,SP1007,Pháp luật Việt Nam Đại cương,2
-90,SP1031,Triết học Mác - Lênin,3
-91,SP1033,Kinh tế Chính trị Mác - Lênin,2
-92,SP1035,Chủ nghĩa Xã hội Khoa học,2
-93,SP1037,Tư tưởng Hồ Chí Minh,2
-94,SP1039,Lịch sử Đảng Cộng sản Việt Nam,2
+﻿course_id,course_code,course_name,credits,course_group
+1,CH1003,Hóa đại cương,3,NON_ELECTIVE
+2,CO1005,Nhập môn Điện toán,3,NON_ELECTIVE
+3,CO1007,Cấu trúc Rời rạc cho Khoa học Máy tính,4,NON_ELECTIVE
+4,CO1023,Hệ thống số,3,NON_ELECTIVE
+5,CO1027,Kỹ thuật Lập trình,3,NON_ELECTIVE
+6,CO2001,Kỹ năng Chuyên nghiệp cho Kỹ sư,3,NON_ELECTIVE
+7,CO2003,Cấu trúc Dữ liệu và Giải Thuật,4,NON_ELECTIVE
+8,CO2007,Kiến trúc Máy tính,4,NON_ELECTIVE
+9,CO2011,Mô hình hóa Toán học,3,NON_ELECTIVE
+10,CO2013,Hệ cơ sở Dữ liệu,4,NON_ELECTIVE
+11,CO2017,Hệ điều hành,3,NON_ELECTIVE
+12,CO2039,Lập trình Nâng cao,3,NON_ELECTIVE
+13,CO3001,Công nghệ Phần mềm,3,NON_ELECTIVE
+14,CO3005,Nguyên lý Ngôn ngữ Lập trình,4,NON_ELECTIVE
+15,CO3011,Quản lý Dự án Phần mềm,3,ELECTIVE_GROUP_C
+16,CO3013,Xây dựng Chương trình Dịch,3,ELECTIVE_GROUP_C
+17,CO3015,Kiểm tra Phần mềm,3,ELECTIVE_GROUP_C
+18,CO3017,Kiến trúc Phần mềm,3,ELECTIVE_GROUP_C
+19,CO3021,Hệ Quản trị Cơ sở Dữ Liệu,3,ELECTIVE_GROUP_C
+20,CO3023,Cơ sở Dữ liệu Phân tán và Hướng đối tượng,3,ELECTIVE_GROUP_C
+21,CO3027,Thương mại Điện tử,3,ELECTIVE_GROUP_C
+22,CO3029,Khai phá Dữ liệu,3,ELECTIVE_GROUP_C
+23,CO3031,Phân tích và Thiết kế Giải Thuật,3,ELECTIVE_GROUP_C
+24,CO3033,Bảo mật Hệ thống Thông tin,3,ELECTIVE_GROUP_C
+25,CO3035,Hệ thời gian thực,3,ELECTIVE_GROUP_C
+26,CO3037,Phát triển Ứng dụng Internet of Things,3,ELECTIVE_GROUP_C
+27,CO3041,Hệ thống Thông minh,3,ELECTIVE_GROUP_C
+28,CO3043,Phát triển Ứng dụng trên Thiết bị Di động,3,ELECTIVE_GROUP_C
+29,CO3045,Lập trình Game,3,ELECTIVE_GROUP_C
+30,CO3047,Mạng máy tính nâng cao,3,ELECTIVE_GROUP_C
+31,CO3049,Lập trình Web,3,ELECTIVE_GROUP_C
+32,CO3051,Hệ thống thiết bị di động,3,ELECTIVE_GROUP_C
+33,CO3057,Xử lý Ảnh số và Thị giác Máy tính,3,ELECTIVE_GROUP_C
+34,CO3059,Đồ họa Máy tính,3,ELECTIVE_GROUP_C
+35,CO3061,Nhập môn Trí tuệ Nhân tạo,3,ELECTIVE_GROUP_C
+36,CO3065,Công nghệ Phần mềm Nâng cao,3,ELECTIVE_GROUP_C
+37,CO3067,Tính toán Song song,3,ELECTIVE_GROUP_C
+38,CO3069,Mật mã và An ninh mạng,3,ELECTIVE_GROUP_C
+39,CO3071,Hệ phân bố,3,ELECTIVE_GROUP_C
+40,CO3083,Mật mã học và Mã hóa Thông tin,3,ELECTIVE_GROUP_C
+41,CO3085,Xử lý Ngôn ngữ Tự nhiên,3,ELECTIVE_GROUP_C
+42,CO3089,Những Chủ đề Nâng cao trong Khoa học Máy tính,3,ELECTIVE_GROUP_C
+43,CO3093,Mạng máy tính,3,NON_ELECTIVE
+44,CO3101,Đồ án Tổng hợp - Hướng Trí tuệ Nhân tạo,1,ELECTIVE_GROUP_A
+45,CO3103,Đồ án Tổng hợp - hướng Công nghệ Phần mềm,1,ELECTIVE_GROUP_A
+46,CO3105,Đồ án Tổng hợp - Hướng Hệ thống Thông tin,1,ELECTIVE_GROUP_A
+47,CO3107,Thực tập Đồ án môn học Đa ngành - Hướng Trí tuệ Nhân tạo,1,ELECTIVE_GROUP_B
+48,CO3109,Thực tập Đồ án môn học Đa ngành - Hướng công Nghệ phần mềm,1,ELECTIVE_GROUP_B
+49,CO3111,Thực tập Đồ án môn học Đa ngành - hướng Hệ thống Thông tin,1,ELECTIVE_GROUP_B
+50,CO3115,Phân tích và Thiết kế Hệ thống,3,ELECTIVE_GROUP_C
+51,CO3117,Học máy,3,ELECTIVE_GROUP_C
+52,CO3119,Đồ án Mạng máy tính,1,NON_ELECTIVE
+53,CO3127,Đồ án tổng hợp - hướng kỹ thuật dữ liệu,1,ELECTIVE_GROUP_A
+54,CO3129,Bảo mật Phần mềm,3,NON_ELECTIVE
+55,CO3131,Công nghệ Phần mềm thế hệ mới,3,NON_ELECTIVE
+56,CO3133,Học sâu và Ứng dụng,3,NON_ELECTIVE
+57,CO3135,Lập trình cho Trí tuệ nhân tạo và Khoa học dữ liệu,3,NON_ELECTIVE
+58,CO3137,Dữ liệu lớn,3,NON_ELECTIVE
+59,CO3139,Chuyển đổi số,3,NON_ELECTIVE
+60,CO3151,Quản trị mạng,3,NON_ELECTIVE
+61,CO3153,Đánh giá an toàn mạng máy tính,3,NON_ELECTIVE
+62,CO3335,Thực tập Ngoài trường,2,NON_ELECTIVE
+63,CO4025,Mạng xã hội và Thông tin,3,ELECTIVE_GROUP_C
+64,CO4029,Đồ án Chuyên ngành,2,NON_ELECTIVE
+65,CO4031,Kho dữ Liệu và Hệ hỗ trợ Quyết định,3,ELECTIVE_GROUP_C
+66,CO4033,Phân tích Dữ liệu lớn và Trí tuệ Kinh doanh,3,ELECTIVE_GROUP_C
+67,CO4035,Hệ hoạch Định tài Nguyên tổ chức,3,ELECTIVE_GROUP_C
+68,CO4037,Hệ thống thông tin quản lý,3,ELECTIVE_GROUP_C
+69,CO4039,Bảo mật sinh trắc,3,ELECTIVE_GROUP_C
+70,CO4337,Đồ án Tốt nghiệp (Khoa học Máy tính),4,NON_ELECTIVE
+71,IM1013,Kinh tế học Đại cương,3,ELECTIVE_MANAGEMENT
+72,IM1023,Quản lý Sản xuất cho Kỹ sư,3,ELECTIVE_MANAGEMENT
+73,IM1025,Quản lý Dự án cho Kỹ sư,3,ELECTIVE_MANAGEMENT
+74,IM1027,Kinh tế Kỹ thuật,3,ELECTIVE_MANAGEMENT
+75,IM3001,Quản trị Kinh doanh cho Kỹ sư,3,ELECTIVE_MANAGEMENT
+76,LA1003,Anh văn 1,2,NON_ELECTIVE
+77,LA1005,Anh văn 2,2,NON_ELECTIVE
+78,LA1007,Anh văn 3,2,NON_ELECTIVE
+79,LA1009,Anh văn 4,2,NON_ELECTIVE
+80,MI1003,Giáo dục Quốc phòng,0,NON_ELECTIVE
+81,MT1003,Giải tích 1,4,NON_ELECTIVE
+82,MT1005,Giải tích 2,4,NON_ELECTIVE
+83,MT1007,Đại số Tuyến tính,3,NON_ELECTIVE
+84,MT2013,Xác suất và Thống kê,4,NON_ELECTIVE
+85,PE1003,Giáo dục thể chất 1,0,NON_ELECTIVE
+86,PE1005,Giáo dục thể chất 2,0,NON_ELECTIVE
+87,PH1003,Vật lý 1,4,NON_ELECTIVE
+88,PH1007,Thí nghiệm Vật lý,1,NON_ELECTIVE
+89,SP1007,Pháp luật Việt Nam Đại cương,2,NON_ELECTIVE
+90,SP1031,Triết học Mác - Lênin,3,NON_ELECTIVE
+91,SP1033,Kinh tế Chính trị Mác - Lênin,2,NON_ELECTIVE
+92,SP1035,Chủ nghĩa Xã hội Khoa học,2,NON_ELECTIVE
+93,SP1037,Tư tưởng Hồ Chí Minh,2,NON_ELECTIVE
+94,SP1039,Lịch sử Đảng Cộng sản Việt Nam,2,NON_ELECTIVE

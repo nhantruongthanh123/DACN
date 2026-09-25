@@ -1,4 +1,5 @@
 import csv
+from contextlib import ExitStack
 import re
 import secrets
 import string
@@ -10,7 +11,12 @@ from faker import Faker
 
 STUDENTS_PER_COHORT = 1_000
 COHORTS = tuple(range(13, 23))
-OUTPUT_FILE = Path(__file__).with_name("students.csv")
+OUTPUT_FILE = Path(__file__).with_name("user.csv")
+ROLE_OUTPUT_FILES = {
+    "student": Path(__file__).with_name("student.csv"),
+    "lecturer": Path(__file__).with_name("lecturer.csv"),
+    "admin": Path(__file__).with_name("admin.csv"),
+}
 MSSV_STEP = 7919
 MSSV_MODULUS = 100_000
 ADMIN_COUNT = 10
@@ -59,11 +65,20 @@ def generate_students():
     fake = Faker("vi_VN")
     Faker.seed(20260923)
 
-    with OUTPUT_FILE.open("w", newline="", encoding="utf-8-sig") as output:
+    header = [
+        "user_id", "name", "email", "password", "password_hash", "role", "title",
+    ]
+    with OUTPUT_FILE.open("w", newline="", encoding="utf-8-sig") as output, ExitStack() as role_outputs:
         writer = csv.writer(output)
-        writer.writerow([
-            "user_id", "name", "email", "password", "password_hash", "role", "title",
-        ])
+        role_writers = {}
+        for role, role_output_file in ROLE_OUTPUT_FILES.items():
+            role_output = role_outputs.enter_context(
+                role_output_file.open("w", newline="", encoding="utf-8-sig")
+            )
+            role_writer = csv.writer(role_output)
+            role_writer.writerow(header)
+            role_writers[role] = role_writer
+        writer.writerow(header)
 
         record_number = 0
         for cohort in COHORTS:
@@ -82,6 +97,9 @@ def generate_students():
                 else:
                     role, title = "student", "undergraduate"
                 writer.writerow([
+                    user_id, name, email, password, password, role, title,
+                ])
+                role_writers[role].writerow([
                     user_id, name, email, password, password, role, title,
                 ])
                 record_number += 1

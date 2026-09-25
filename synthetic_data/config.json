@@ -1,0 +1,99 @@
+{
+  "seed": 42,
+  "max_terms": 12,
+  "min_credits_per_term": 12,
+  "max_credits_per_term": 21,
+  "pass_score": 5.0,
+  "max_retakes": 2,
+  "personality_profiles": {
+    "CHAM": {
+      "proportion": 0.25,
+      "score_offset": 0.8,
+      "component_offsets": {
+        "quiz": 0.6,
+        "lab": 0.7,
+        "btl": 0.9,
+        "giua_ky": 0.7,
+        "cuoi_ky": 0.6
+      },
+      "noise_multiplier": 0.7
+    },
+    "BINH_THUONG": {
+      "proportion": 0.5,
+      "score_offset": 0.0,
+      "component_offsets": {},
+      "noise_multiplier": 1.0
+    },
+    "LUOI": {
+      "proportion": 0.15,
+      "score_offset": -0.35,
+      "component_offsets": {
+        "quiz": -0.25,
+        "lab": -0.35,
+        "btl": -0.4,
+        "giua_ky": -0.2,
+        "cuoi_ky": -0.1
+      },
+      "noise_multiplier": 1.15
+    },
+    "HOAN_CANH_KHO_KHAN": {
+      "proportion": 0.1,
+      "score_offset": -0.1,
+      "component_offsets": {
+        "quiz": -0.05,
+        "lab": -0.1,
+        "btl": -0.1,
+        "giua_ky": -0.3,
+        "cuoi_ky": -0.7
+      },
+      "noise_multiplier": 1.1
+    }
+  },
+  "ability_groups": {
+    "XUAT_SAC": {
+      "proportion": 0.0077,
+      "mean": 9.0,
+      "std": 0.5,
+      "fail_rate": 0.0
+    },
+    "GIOI": {
+      "proportion": 0.27,
+      "mean": 8.25,
+      "std": 0.25,
+      "fail_rate": 0.005
+    },
+    "KHA": {
+      "proportion": 0.7,
+      "mean": 7.3,    
+      "std": 0.3,
+      "min_ability": 6.8,
+      "fail_rate": 0.05
+    },
+    "TRUNG_BINH": {
+      "proportion": 0.05,
+      "mean": 5.5,
+      "std": 0.5,
+      "fail_rate": 0.25
+    },
+    "DROPOUT": {
+      "proportion": 0.05,
+      "mean": 2.0,
+      "std": 1,
+      "fail_rate": 0.58
+    }
+  },
+  "course_group_difficulty": {
+    "NON_ELECTIVE": 0.15,
+    "ELECTIVE_GROUP_A": -0.15,
+    "ELECTIVE_GROUP_B": -0.1,
+    "ELECTIVE_GROUP_C": -0.1,
+    "ELECTIVE_MANAGEMENT": -0.2
+  },
+  "component_noise": {
+    "quiz": 0.65,
+    "lab": 0.45,
+    "btl": 0.55,
+    "giua_ky": 0.85,
+    "cuoi_ky": 1.0
+  }
+}

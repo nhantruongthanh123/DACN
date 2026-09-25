@@ -13,6 +13,9 @@ Columns:
 - `course_code`: course code, for example `CO1005`, `MT1003`, `SP1031`.
 - `course_name`: course name in Vietnamese.
 - `credits`: number of credits for the course.
+- `course_group`: curriculum grouping. Values include `ELECTIVE_GROUP_A`,
+  `ELECTIVE_GROUP_B`, `ELECTIVE_GROUP_C`, `ELECTIVE_MANAGEMENT`, and
+  `NON_ELECTIVE`.
 
 Example:
 ```csv
