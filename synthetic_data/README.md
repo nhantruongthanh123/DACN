@@ -89,15 +89,25 @@ File: `student.csv`
 Description: A list of synthetic student accounts. The file contains 9,890 student records and does not include administrator accounts or password fields.
 
 Columns:
-- `user_id`: unique identifier for the student.
+- `student_id`: seven-digit Bách Khoa-style identifier. The first three
+  digits identify the cohort: `231` for K23, `241` for K24, `251` for K25,
+  and `261` for K26.
 - `name`: student's full name.
 - `email`: student's synthetic university email address.
 - `role`: account role; this file contains `student`.
 - `title`: academic level; student records use `undergraduate`.
+- `cohort`: student cohort, from `K23` through `K26`.
+- `major`: student's major; this file uses `computer science`.
 
 Purpose:
 - Provides student information for enrollment, progression, and risk analysis.
-- Can be joined to other student-related datasets through `user_id`.
+- Can be joined to other student-related datasets through `student_id`.
+
+To refresh the cohort, IDs, email addresses, and major, run:
+
+```bash
+python update_student_cohorts.py
+```
 
 ---
 
