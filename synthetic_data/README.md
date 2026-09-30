@@ -4,7 +4,7 @@ This folder contains synthetic data used for analyzing study plans, prerequisite
 
 ## 1. course.csv
 
-File: `course.csv`
+File: `data/catalog/course.csv`
 
 Description: A table listing all courses in the curriculum.
 
@@ -27,7 +27,7 @@ Purpose:
 
 ## 2. course_prerequisite.csv
 
-File: `course_prerequisite.csv`
+File: `data/catalog/course_prerequisite.csv`
 
 Description: A table showing prerequisite relationships between courses.
 
@@ -58,7 +58,7 @@ Purpose:
 
 ## 3. semester.csv
 
-File: `semester.csv`
+File: `data/academic/semester.csv`
 
 Description: A table containing academic semester information.
 
@@ -84,7 +84,7 @@ Purpose:
 
 ## 4. student.csv
 
-File: `student.csv`
+File: `data/people/student.csv`
 
 Description: A list of synthetic student accounts. The file contains 9,890 student records and does not include administrator accounts or password fields.
 
@@ -113,7 +113,7 @@ python update_student_cohorts.py
 
 ## 5. lecture.csv
 
-File: `lecture.csv`
+File: `data/people/lecture.csv`
 
 Description: A list of synthetic lecturer accounts. The file contains 100 lecturer records and does not include administrator accounts or password fields.
 
@@ -132,7 +132,7 @@ Purpose:
 
 ## 6. class.csv
 
-File: `class.csv`
+Files: `generated/classes/class_hk*.csv`
 
 Description: A list of synthetic course classes, mapping specific course offerings to semesters, class groups, and lecturers. 
 

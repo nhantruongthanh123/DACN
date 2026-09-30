@@ -1,0 +1,10 @@
+﻿rule_id,source_program,source_cohort,applies_to_cohorts,available_from_semester,course_code,course_name,credits,activation_condition,priority,early_graduation_semester,target_semester,prerequisite_policy,tuition_baseline_credits,semester_credit_limit,notes
+ADD_CH1003_HK2,2023 Computer Science,K23,K23|K24|K25|K26,HK2,CH1003,Hóa đại cương,3,under_18_or_eligible_acceleration,20,,,respect_TQ,18,22,Được học trước từ HK2
+ADD_CO2001_HK2,2023 Computer Science,K23,K23|K24|K25|K26,HK2,CO2001,Kỹ năng Chuyên nghiệp cho Kỹ sư,3,under_18_or_eligible_acceleration,20,,,respect_TQ,18,22,Được học vượt từ HK2
+ADD_MT2013_HK3,2023 Computer Science,K23,K23|K24|K25|K26,HK3,MT2013,Xác suất và Thống kê,4,under_18_or_eligible_acceleration,20,,,respect_TQ,18,22,Được học trước từ HK3
+ADD_CO3093_HK4,2023 Computer Science,K23,K23|K24|K25|K26,HK4,CO3093,Mạng máy tính,3,under_18_or_eligible_acceleration,20,,,respect_TQ,18,22,Được học trước từ HK4
+ADD_CO2013_HK4,2023 Computer Science,K23,K23|K24|K25|K26,HK4,CO2013,Hệ cơ sở Dữ liệu,4,under_18_or_eligible_acceleration,20,,,respect_TQ,18,22,Được học trước từ HK4
+ADD_GROUP_C_HK5,2023 Computer Science,K23,K23|K24|K25|K26,HK5,GROUP_C,Tự chọn nhóm C,3,under_18_or_eligible_acceleration,30,,,respect_TQ,18,22,Chọn các học phần thực tế thuộc nhóm C trong course.csv; số tín chỉ mỗi lần chọn lấy theo học phần
+EARLY_CO3061_HK6,2023 Computer Science,K23,K23|K24|K25|K26,HK6,CO3061,Nhập môn Trí tuệ Nhân tạo,3,early_graduation_3_5_years,10,HK6,HK7,respect_TQ,18,22,Phải đăng ký trong HK6 của lộ trình tốt nghiệp sớm
+EARLY_CO4029_HK6,2023 Computer Science,K23,K23|K24|K25|K26,HK6,CO4029,Đồ án Chuyên ngành,2,early_graduation_3_5_years,11,HK6,HK7,respect_TQ,18,22,Đăng ký cùng HK6 với CO3061
+EARLY_CO4337_HK7,2023 Computer Science,K23,K23|K24|K25|K26,HK7,CO4337,Đồ án Tốt nghiệp (Khoa học Máy tính),4,early_graduation_3_5_years,12,HK7,HK7,respect_TQ,18,22,Đăng ký từ HK7 sau khi đã hoàn thành điều kiện của chương trình

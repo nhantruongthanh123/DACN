@@ -1,0 +1,45 @@
+course_code,course_name,credits,elective_group,available_from_semester,priority,prerequisite_policy
+CO3011,Quản lý Dự án Phần mềm,3,GROUP_C,HK5,10,respect_TQ
+CO3013,Xây dựng Chương trình Dịch,3,GROUP_C,HK5,20,respect_TQ
+CO3015,Kiểm tra Phần mềm,3,GROUP_C,HK5,30,respect_TQ
+CO3017,Kiến trúc Phần mềm,3,GROUP_C,HK5,40,respect_TQ
+CO3021,Hệ Quản trị Cơ sở Dữ liệu,3,GROUP_C,HK5,50,respect_TQ
+CO3023,Cơ sở Dữ liệu Phân tán và Hướng đối tượng,3,GROUP_C,HK5,60,respect_TQ
+CO3027,Thương mại Điện tử,3,GROUP_C,HK5,70,respect_TQ
+CO3029,Khai phá Dữ liệu,3,GROUP_C,HK5,80,respect_TQ
+CO3031,Phân tích và Thiết kế Giải Thuật,3,GROUP_C,HK5,90,respect_TQ
+CO3033,Bảo mật Hệ thống Thông tin,3,GROUP_C,HK5,100,respect_TQ
+CO3035,Hệ thời gian thực,3,GROUP_C,HK5,110,respect_TQ
+CO3037,Phát triển Ứng dụng Internet of Things,3,GROUP_C,HK5,120,respect_TQ
+CO3041,Hệ thống Thông minh,3,GROUP_C,HK5,130,respect_TQ
+CO3043,Phát triển Ứng dụng trên Thiết bị Di động,3,GROUP_C,HK5,140,respect_TQ
+CO3045,Lập trình Game,3,GROUP_C,HK5,150,respect_TQ
+CO3047,Mạng máy tính nâng cao,3,GROUP_C,HK5,160,respect_TQ
+CO3049,Lập trình Web,3,GROUP_C,HK5,170,respect_TQ
+CO3051,Hệ thống thiết bị di động,3,GROUP_C,HK5,180,respect_TQ
+CO3057,Xử lý Ảnh số và Thị giác Máy tính,3,GROUP_C,HK5,190,respect_TQ
+CO3059,Đồ họa Máy tính,3,GROUP_C,HK5,200,respect_TQ
+CO3061,Nhập môn Trí tuệ Nhân tạo,3,GROUP_C,HK5,210,respect_TQ
+CO3065,Công nghệ Phần mềm Nâng cao,3,GROUP_C,HK5,220,respect_TQ
+CO3067,Tính toán Song song,3,GROUP_C,HK5,230,respect_TQ
+CO3069,Mật mã và An ninh mạng,3,GROUP_C,HK5,240,respect_TQ
+CO3071,Hệ phân bố,3,GROUP_C,HK5,250,respect_TQ
+CO3083,Mật mã học và Mã hóa Thông tin,3,GROUP_C,HK5,260,respect_TQ
+CO3085,Xử lý Ngôn ngữ Tự nhiên,3,GROUP_C,HK5,270,respect_TQ
+CO3089,Những Chủ đề Nâng cao trong Khoa học Máy tính,3,GROUP_C,HK5,280,respect_TQ
+CO3115,Phân tích và Thiết kế Hệ thống,3,GROUP_C,HK5,290,respect_TQ
+CO3117,Học máy,3,GROUP_C,HK5,300,respect_TQ
+CO3129,Bảo mật Phần mềm,3,GROUP_C,HK5,310,respect_TQ
+CO3131,Công nghệ Phần mềm thế hệ mới,3,GROUP_C,HK5,320,respect_TQ
+CO3133,Học sâu và Ứng dụng,3,GROUP_C,HK5,330,respect_TQ
+CO3135,Lập trình cho Trí tuệ nhân tạo và Khoa học dữ liệu,3,GROUP_C,HK5,340,respect_TQ
+CO3137,Dữ liệu lớn,3,GROUP_C,HK5,350,respect_TQ
+CO3139,Chuyển đổi số,3,GROUP_C,HK5,360,respect_TQ
+CO3151,Quản trị mạng,3,GROUP_C,HK5,370,respect_TQ
+CO3153,Đánh giá an toàn mạng máy tính,3,GROUP_C,HK5,380,respect_TQ
+CO4025,Mạng xã hội và Thông tin,3,GROUP_C,HK5,390,respect_TQ
+CO4031,Kho dữ Liệu và Hệ hỗ trợ Quyết định,3,GROUP_C,HK5,400,respect_TQ
+CO4033,Phân tích Dữ liệu lớn và Trí tuệ Kinh doanh,3,GROUP_C,HK5,410,respect_TQ
+CO4035,Hệ hoạch Định tài Nguyên tổ chức,3,GROUP_C,HK5,420,respect_TQ
+CO4037,Hệ thống thông tin quản lý,3,GROUP_C,HK5,430,respect_TQ
+CO4039,Bảo mật sinh trắc,3,GROUP_C,HK5,440,respect_TQ

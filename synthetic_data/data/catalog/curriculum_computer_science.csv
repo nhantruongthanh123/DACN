@@ -1,0 +1,46 @@
+program_year,major,semester,course_order,course_code,course_name,credits,course_type,elective_group,elective_requirement
+2023,Computer Science,HK1,1,LA1003,Anh văn 1,2,required,,
+2023,Computer Science,HK1,2,PE1003,Giáo dục thể chất 1,0,required,,
+2023,Computer Science,HK1,3,MT1003,Giải tích 1,4,required,,
+2023,Computer Science,HK1,4,PH1003,Vật lý 1,4,required,,
+2023,Computer Science,HK1,5,CO1005,Nhập môn Điện toán,3,required,,
+2023,Computer Science,HK1,6,CO1023,Hệ thống số,3,required,,
+2023,Computer Science,HK2,1,LA1005,Anh văn 2,2,required,,
+2023,Computer Science,HK2,2,PE1005,Giáo dục thể chất 2,0,required,,
+2023,Computer Science,HK2,3,MT1005,Giải tích 2,4,required,,
+2023,Computer Science,HK2,4,MT1007,Đại số Tuyến tính,3,required,,
+2023,Computer Science,HK2,5,CO1007,Cấu trúc Rời rạc cho Khoa học Máy tính,4,required,,
+2023,Computer Science,HK2,6,CO1027,Kỹ thuật Lập trình,3,required,,
+2023,Computer Science,HK2,7,PH1007,Thí nghiệm Vật lý,1,required,,
+2023,Computer Science,HK2,8,MI1003,Giáo dục Quốc phòng,0,required,,
+2023,Computer Science,HK3,1,LA1007,Anh văn 3,2,required,,
+2023,Computer Science,HK3,2,SP1031,Triết học Mác - Lênin,3,required,,
+2023,Computer Science,HK3,3,CO2007,Kiến trúc Máy tính,4,required,,
+2023,Computer Science,HK3,4,CO2011,Mô hình hóa Toán học,3,required,,
+2023,Computer Science,HK3,5,CO2003,Cấu trúc Dữ liệu và Giải Thuật,4,required,,
+2023,Computer Science,HK4,1,LA1009,Anh văn 4,2,required,,
+2023,Computer Science,HK4,2,SP1033,Kinh tế Chính trị Mác - Lênin,2,required,,
+2023,Computer Science,HK4,3,CO2017,Hệ điều hành,3,required,,
+2023,Computer Science,HK4,4,CO2039,Lập trình Nâng cao,3,required,,
+2023,Computer Science,HK4,5,MT2013,Xác suất và Thống kê,4,required,,
+2023,Computer Science,HK4,6,,Tự chọn tự do,3,elective,FREE,Chọn đủ 3 tín chỉ
+2023,Computer Science,HK5,1,SP1035,Chủ nghĩa Xã hội Khoa học,2,required,,
+2023,Computer Science,HK5,2,CO3093,Mạng máy tính,3,required,,
+2023,Computer Science,HK5,3,CO2013,Hệ cơ sở Dữ liệu,4,required,,
+2023,Computer Science,HK5,4,CO3001,Công nghệ Phần mềm,3,required,,
+2023,Computer Science,HK5,5,CH1003,Hóa đại cương,3,required,,
+2023,Computer Science,HK5,6,,Tự chọn nhóm A,1,elective,GROUP_A,Chọn 1 tín chỉ Đồ án Tổng hợp
+2023,Computer Science,HK6,1,SP1039,Lịch sử Đảng Cộng sản Việt Nam,2,required,,
+2023,Computer Science,HK6,2,CO2001,Kỹ năng Chuyên nghiệp cho Kỹ sư,3,required,,
+2023,Computer Science,HK6,3,CO3005,Nguyên lý Ngôn ngữ Lập trình,4,required,,
+2023,Computer Science,HK6,4,CO3335,Thực tập Ngoài trường,2,required,,
+2023,Computer Science,HK6,5,,Tự chọn nhóm B,1,elective,GROUP_B,Chọn 1 tín chỉ Thực tập Đồ án Đa ngành
+2023,Computer Science,HK6,6,,Tự chọn tự do,3,elective,FREE,Chọn đủ 3 tín chỉ
+2023,Computer Science,HK7,1,SP1037,Tư tưởng Hồ Chí Minh,2,required,,
+2023,Computer Science,HK7,2,CO4029,Đồ án Chuyên ngành,2,required,,
+2023,Computer Science,HK7,3,,Tự chọn tự do,3,elective,FREE,Chọn đủ 3 tín chỉ
+2023,Computer Science,HK7,4,,Tự chọn nhóm C,6,elective,GROUP_C,Chọn đủ 6 tín chỉ
+2023,Computer Science,HK8,1,SP1007,Pháp luật Việt Nam Đại cương,2,required,,
+2023,Computer Science,HK8,2,CO4337,Đồ án Tốt nghiệp (Khoa học Máy tính),4,required,,
+2023,Computer Science,HK8,3,,Tự chọn nhóm C,9,elective,GROUP_C,Chọn đủ 9 tín chỉ
+2023,Computer Science,HK8,4,,Tự chọn nhóm D,3,elective,GROUP_D,Chọn 3 tín chỉ nhóm Kinh tế/Quản lý

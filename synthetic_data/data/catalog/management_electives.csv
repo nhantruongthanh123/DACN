@@ -1,0 +1,6 @@
+﻿course_code,course_name,credits,elective_group,available_from_semester,priority,prerequisite_policy,department
+IM1013,Kinh tế học Đại cương,3,MANAGEMENT,HK4,10,respect_TQ,DaiCuong
+IM1023,Quản lý Sản xuất cho Kỹ sư,3,MANAGEMENT,HK4,20,respect_TQ,DaiCuong
+IM1025,Quản lý Dự án cho Kỹ sư,3,MANAGEMENT,HK4,30,respect_TQ,DaiCuong
+IM1027,Kinh tế Kỹ thuật,3,MANAGEMENT,HK4,40,respect_TQ,DaiCuong
+IM3001,Quản trị Kinh doanh cho Kỹ sư,3,MANAGEMENT,HK4,50,respect_TQ,DaiCuong
