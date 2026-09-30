@@ -1,5 +1,6 @@
-data/
 documents/
 sample/
 
 .venv/
+__pycache__/
+*.py[cod]
