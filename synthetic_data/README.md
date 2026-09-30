@@ -1,173 +1,85 @@
-# Synthetic Course and Semester Data
+# Dữ liệu mô phỏng quản lý đào tạo
 
-This folder contains synthetic data used for analyzing study plans, prerequisite relationships between courses, and academic semester information.
+`synthetic_data` là bộ dữ liệu mô phỏng cho bài toán quản lý đào tạo ngành Computer Science: danh mục môn học, chương trình, sinh viên, giảng viên, lớp học phần, đăng ký và điểm theo học kỳ. Toàn bộ dữ liệu là **dữ liệu tổng hợp**, không phải dữ liệu học vụ thực tế.
 
-## 1. course.csv
+## Cấu trúc thư mục
 
-File: `data/catalog/course.csv`
-
-Description: A table listing all courses in the curriculum.
-
-Columns:
-- `course_id`: internal unique identifier for the course.
-- `course_code`: course code, for example `CO1005`, `MT1003`, `SP1031`.
-- `course_name`: course name in Vietnamese.
-- `credits`: number of credits for the course.
-
-Example:
-```csv
-1,CO1005,Nhập môn Điện toán,3
+```text
+synthetic_data/
+├── data/        # Dữ liệu nguồn
+├── rules/       # Quy tắc chương trình và học vụ
+├── generators/  # Script sinh lớp, enrollment và điểm
+├── generated/   # Kết quả sinh ra
+└── tools/       # Script chuẩn bị dữ liệu và điều phối
 ```
 
-Purpose:
-- Used to look up general information about each course.
-- Supports curriculum analysis, credit mapping, and course grouping.
+| Thư mục | Vai trò | Tài liệu chi tiết |
+| --- | --- | --- |
+| `data/` | Dữ liệu nguồn về học kỳ, danh mục môn, sinh viên và giảng viên. | [data/README.MD](data/README.MD) |
+| `rules/` | Xét môn học, tiên quyết, học lại, tự chọn, tín chỉ và độ khó môn. | [rules/README.MD](rules/README.MD) |
+| `generators/` | Tạo lớp, phân sinh viên vào lớp và mô phỏng điểm từ HK231 đến HK261. | [generators/README.MD](generators/README.MD) |
+| `tools/` | Tạo điểm nền, phân bộ môn giảng viên, cập nhật độ khó và chạy generator. | [tools/README.MD](tools/README.MD) |
+| `generated/` | File đầu ra có thể tạo lại, không phải dữ liệu nguồn. | Xem phần dưới. |
 
----
+## Dữ liệu nguồn: `data/`
 
-## 2. course_prerequisite.csv
+`data/` có ba nhóm lớn.
 
-File: `data/catalog/course_prerequisite.csv`
+### `data/academic/` — mốc thời gian
 
-Description: A table showing prerequisite relationships between courses.
+- `semester.csv`: danh sách học kỳ, gồm mã kỳ (`semester_code`), niên khóa và số thứ tự kỳ. Mã như `HK231`, `HK242` xuất hiện trong tên file class và enrollment.
 
-Columns:
-- `course_prerequisite_id`: unique identifier for the prerequisite relationship.
-- `course_code`: the course being evaluated, which has prerequisite conditions.
-- `related_course_code`: the related course, typically the course that must be completed first.
-- `relation_type`: the type of relationship between the two courses.
+### `data/catalog/` — chương trình đào tạo và môn học
 
-Common values in `relation_type`:
-- `KN`: knowledge block / required prerequisite.
-- `TQ`: equivalent prerequisite or a course that must be completed before another.
-- `HT`: prerequisite / required sequence condition.
-- `SHT`: a specific prerequisite relationship, often representing a stronger or additional condition.
+- `course.csv`: danh mục môn chuẩn (`course_code`, tên, tín chỉ, `difficulty`).
+- `assessment.csv`: cơ cấu điểm theo môn, gồm trọng số `quiz`, `lab`, `btl`, `giua_ky`, `cuoi_ky`.
+- `course_prerequisite.csv`: quan hệ môn học; logic hiện tại bắt buộc quan hệ `TQ` khi xét đăng ký.
+- `curriculum_computer_science.csv`: môn theo khung chương trình HK1–HK8.
+- `additional_course_rules.csv`: môn bổ sung/học sớm và điều kiện áp dụng.
+- `elective_courses.csv`, `management_electives.csv`, `group_c_electives.csv`: môn tự chọn theo nhóm.
 
-Example:
-```csv
-1,MT1005,MT1003,KN
+### `data/people/` — sinh viên và giảng viên
+
+- `student.csv`: hồ sơ sinh viên gốc, gồm mã sinh viên, khóa, ngành và thông tin liên hệ.
+- `student_base_score.csv`: điểm năng lực nền trên thang 10; là đầu vào chính để mô phỏng điểm.
+- `lecture.csv`: hồ sơ giảng viên gốc.
+- `lecturer_for_class.csv`: giảng viên đã gắn bộ môn `Triet`, `DaiCuong` hoặc `ChuyenNganh` để generator phân công lớp.
+
+Xem [data/README.MD](data/README.MD) để biết vai trò và cấu trúc cột của từng CSV.
+
+## Dữ liệu được sinh: `generated/`
+
+| Loại file | Mẫu tên | Nội dung chính |
+| --- | --- | --- |
+| Lớp học phần | `generated/classes/class_hk*.csv` | `class_id`, mã/tên môn, học kỳ, nhóm lớp và giảng viên phụ trách. |
+| Đăng ký/điểm | `generated/enrollments/enrollment_hk*.csv` | Sinh viên, lớp được xếp, điểm thành phần, `final_score`, `status`. |
+
+Các file liên kết qua `class_id`: enrollment ghi lớp sinh viên được xếp, còn file class xác định môn và giảng viên. Nhờ vậy lịch sử enrollment có thể được ghép với class để xác định sinh viên đã học, đậu hoặc trượt môn nào.
+
+HK261 là ngoại lệ: enrollment được tạo cho học kỳ đang diễn ra nên `final_score` và `status` chưa có giá trị.
+
+## Quy trình tạo dữ liệu
+
+```text
+student.csv ──> add_base_score.py ──> student_base_score.csv
+lecture.csv ──> add_lecture_dep.py ──> lecturer_for_class.csv
+catalog CSV + people CSV + rules ──> generator class ──> class_hk*.csv
+class_hk*.csv + lịch sử + assessment ──> generator enrollment ──> enrollment_hk*.csv
 ```
 
-Explanation:
-- `MT1005` (Calculus 2) has a `KN` relationship with `MT1003` (Calculus 1), meaning this course requires `MT1003` to be completed first.
-
-Purpose:
-- Used to build a course dependency graph, check prerequisite rules, and support academic roadmap recommendations.
-
----
-
-## 3. semester.csv
-
-File: `data/academic/semester.csv`
-
-Description: A table containing academic semester information.
-
-Columns:
-- `semester_id`: unique identifier for the semester.
-- `semester_code`: semester code, for example `HK231`, `HK242`, `HK251`.
-- `academic_year`: corresponding academic year.
-- `term`: semester in the academic year, values 1, 2, or 3.
-
-Example:
-```csv
-1,HK231,2023-2024,1
-```
-
-Explanation:
-- `HK231` represents semester 1 of the 2023-2024 academic year.
-
-Purpose:
-- Used to categorize data by study period.
-- Supports tracking student progression, scheduling, and analysis by academic year and semester.
-
----
-
-## 4. student.csv
-
-File: `data/people/student.csv`
-
-Description: A list of synthetic student accounts. The file contains 9,890 student records and does not include administrator accounts or password fields.
-
-Columns:
-- `student_id`: seven-digit Bách Khoa-style identifier. The first three
-  digits identify the cohort: `231` for K23, `241` for K24, `251` for K25,
-  and `261` for K26.
-- `name`: student's full name.
-- `email`: student's synthetic university email address.
-- `role`: account role; this file contains `student`.
-- `title`: academic level; student records use `undergraduate`.
-- `cohort`: student cohort, from `K23` through `K26`.
-- `major`: student's major; this file uses `computer science`.
-
-Purpose:
-- Provides student information for enrollment, progression, and risk analysis.
-- Can be joined to other student-related datasets through `student_id`.
-
-To refresh the cohort, IDs, email addresses, and major, run:
+Chạy quy trình đầy đủ từ thư mục gốc dự án:
 
 ```bash
-python update_student_cohorts.py
+source .venv/bin/activate
+python synthetic_data/tools/run_all.py
 ```
 
----
+Lệnh chạy các kỳ theo thứ tự HK231 → HK261 và ghi đè CSV trong `synthetic_data/generated/`. Khi thay đổi dữ liệu nguồn, cấu trúc điểm hoặc quy tắc học vụ, hãy chạy lại toàn bộ chuỗi để lịch sử các kỳ nhất quán.
 
-## 5. lecture.csv
+## Quy ước quan trọng
 
-File: `data/people/lecture.csv`
-
-Description: A list of synthetic lecturer accounts. The file contains 100 lecturer records and does not include administrator accounts or password fields.
-
-Columns:
-- `user_id`: unique identifier for the lecturer.
-- `name`: lecturer's full name.
-- `email`: lecturer's synthetic university email address.
-- `role`: account role; this file contains `lecturer`.
-- `title`: academic qualification or position, such as `bachelor`, `master`, `doctor`, `associate_professor`, or `professor`.
-
-Purpose:
-- Provides lecturer information for teaching assignments.
-- The lecturer's `name` is referenced by `class.csv` in the `lecturer_name` column.
-
----
-
-## 6. class.csv
-
-Files: `generated/classes/class_hk*.csv`
-
-Description: A list of synthetic course classes, mapping specific course offerings to semesters, class groups, and lecturers. 
-
-Columns:
-- `class_id`: auto-incrementing integer acting as the unique surrogate key for the class (e.g., `1`, `2`, `3`).
-- `course_code`: the official course code, linking the class to its academic metadata (e.g., `CH1003`, `CO1005`).
-- `semester`: the academic semester code in which the class is offered (e.g., `HK231`, `HK243`).
-- `class_group`: the specific section or group identifier for the class (e.g., `L01`, `L02`).
-- `lecturer_name`: name of the lecturer assigned to teach this specific class.
-
-Example:
-```csv
-1,CH1003,HK231,L01,Đặng Gia Hiếu
-```
-
----
-
-## Dataset overview
-
-This dataset simulates a training management system with six main components:
-1. Course list.
-2. Prerequisite relationships between courses.
-3. Semester information.
-4. Student accounts.
-5. Lecturer accounts.
-6. Course classes and lecturer assignments.
-
-The data can be used for:
-- Building study roadmaps.
-- Analyzing prerequisite courses.
-- Evaluating student progress by semester.
-- Analyzing course offerings and lecturer assignments.
-- Generating data for machine learning models, course recommendation systems, or risk assessments for delayed progression.
-
-## Notes
-
-- This is synthetic data and not real academic data from a management system.
-- Course codes and semester codes are designed with a consistent format to simplify data processing.
+- `student_id` có tiền tố như `231`, `241`, `251`, `261` để nhận biết khóa; rule dùng tiền tố này khi chọn chương trình phù hợp.
+- `course_code` là mã liên kết chính giữa danh mục môn, class, tiên quyết và enrollment.
+- `credits` được dùng để giữ số tín chỉ đăng ký không vượt 22 trong một kỳ.
+- `status` là `Pass` nếu `final_score >= 5`, ngược lại là `Fail`.
+- Đường dẫn trong tài liệu được viết từ thư mục gốc dự án.
