@@ -148,7 +148,7 @@ def summarize_required_courses(student_id, print_report=True):
               f"{electives['remaining_credits'].sum() if not electives.empty else 0:g}")
     return result
 
-summarize_required_courses("2310009")
+# summarize_required_courses("2310009")
 
 
 def view_student_results(student_id):
