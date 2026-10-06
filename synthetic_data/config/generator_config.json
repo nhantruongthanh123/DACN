@@ -57,19 +57,19 @@
   },
   "student_progress": {
     "observed_semesters": [
-      "HK231",
-      "HK232",
-      "HK241",
-      "HK242",
-      "HK251",
-      "HK252",
-      "HK261"
+      "HK131",
+      "HK132",
+      "HK141",
+      "HK142",
+      "HK151",
+      "HK152",
+      "HK161"
     ],
     "cohort_start_semester": {
-      "23": "HK231",
-      "24": "HK241",
-      "25": "HK251",
-      "26": "HK261"
+      "13": "HK131",
+      "14": "HK141",
+      "15": "HK151",
+      "16": "HK161"
     },
     "ctxh": {
       "minimum_for_thesis": 12,

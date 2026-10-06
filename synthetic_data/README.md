@@ -29,7 +29,7 @@ synthetic_data/
 
 ### `data/academic/` — mốc thời gian
 
-- `semester.csv`: danh sách học kỳ, gồm mã kỳ (`semester_code`), niên khóa và số thứ tự kỳ. Mã như `HK231`, `HK242` xuất hiện trong tên file class và enrollment.
+- `semester.csv`: danh sách học kỳ, gồm mã kỳ (`semester_code`), niên khóa và số thứ tự kỳ. Mã như `HK131`, `HK142` xuất hiện trong tên file class và enrollment.
 
 ### `data/catalog/` — chương trình đào tạo và môn học
 
@@ -60,8 +60,8 @@ Xem [data/README.MD](data/README.MD) để biết vai trò và cấu trúc cột
 
 Các file liên kết qua `class_id`: enrollment ghi lớp sinh viên được xếp, còn file class xác định môn và giảng viên. Nhờ vậy lịch sử enrollment có thể được ghép với class để xác định sinh viên đã học, đậu hoặc trượt môn nào.
 
-HK261 là ngoại lệ: enrollment được tạo cho học kỳ đang diễn ra nên `final_score`,
-grade và `status` chưa có giá trị; GPA tích lũy phản ánh các học kỳ đã hoàn tất.
+HK161 là kỳ cuối của chuỗi mô phỏng; enrollment vẫn sinh đầy đủ
+`final_score`, grade và `status` như các kỳ trước.
 
 ## Quy trình tạo dữ liệu
 
@@ -81,7 +81,7 @@ python synthetic_data/tools/run_all.py
 ```
 
 Lệnh tạo profile trước, sau đó chạy theo từng cặp class → enrollment trong thứ
-tự HK231 → HK261 và ghi đè CSV trong `synthetic_data/generated/`. Không thể
+tự HK131 → HK161 và ghi đè CSV trong `synthetic_data/generated/`. Không thể
 tạo toàn bộ class của các kỳ trước enrollment vì nhu cầu lớp ở kỳ sau phụ thuộc
 lịch sử enrollment các kỳ trước.
 
@@ -104,8 +104,8 @@ hoặc đưa vào mẫu số. HK261 đang diễn ra; điểm chưa chấm không
 phối điểm và tỷ lệ grade. Khi chưa có sinh viên tốt nghiệp trong dữ liệu quan
 sát, các tỷ lệ tốt nghiệp/phân loại có mẫu số 0 và giá trị 0.
 
-Nguồn dữ liệu hiện có 9.890 sinh viên, thuộc khóa 2023–2026 (mã bắt đầu
-`23`–`26`). `tools/generate_student_cohorts.py` giữ nguyên tên và các trường
+Nguồn dữ liệu hiện có 9.890 sinh viên, thuộc khóa 2013–2016 (mã bắt đầu
+`13`–`16`). `tools/generate_student_cohorts.py` giữ nguyên tên và các trường
 khác, phân bổ lại danh sách theo trọng số tăng dần từ 8% cho K13 tới 14,5% cho
 K26 (chuẩn hóa tổng trọng số thành 100%), đồng thời cập nhật MSSV/email. Sĩ số
 theo khóa được làm tròn để tổng vẫn là 9.890; K26 nhận khoảng 910 sinh viên.

@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pandas as pd
 
-ROOT_DIR = Path(__file__).resolve().parents[1]
+ROOT_DIR = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT_DIR / "rules"))
 
 from academic_rules import (
@@ -23,33 +23,33 @@ from curriculum_rules import (
 )
 
 
-SEMESTER = "HK261"
-K23_COURSES = ["SP1037", "CO4029"]
-K24_COURSES = curriculum_courses("HK5")
-K25_COURSES = curriculum_courses("HK3")
-K26_COURSES = curriculum_courses("HK1")
-K24_EXTRA_COURSES = [
-    code for code in additional_courses("HK5") if code not in K24_COURSES
+SEMESTER = "HK161"
+K13_COURSES = ["SP1037", "CO4029"]
+K14_COURSES = curriculum_courses("HK5")
+K15_COURSES = curriculum_courses("HK3")
+K16_COURSES = curriculum_courses("HK1")
+K14_EXTRA_COURSES = [
+    code for code in additional_courses("HK5") if code not in K14_COURSES
 ]
-K25_EXTRA_COURSES = [
-    code for code in additional_courses("HK3") if code not in K25_COURSES
+K15_EXTRA_COURSES = [
+    code for code in additional_courses("HK3") if code not in K15_COURSES
 ]
-K26_EXTRA_COURSES = [
-    code for code in additional_courses("HK1") if code not in K26_COURSES
+K16_EXTRA_COURSES = [
+    code for code in additional_courses("HK1") if code not in K16_COURSES
 ]
 FREE = free_elective_courses("HK7")
 GROUP_C = group_c_elective_courses("HK7")
 COURSE_ORDER = list(dict.fromkeys(
-    K23_COURSES
-    + K24_COURSES + K24_EXTRA_COURSES
-    + K25_COURSES + K25_EXTRA_COURSES
-    + K26_COURSES + K26_EXTRA_COURSES
+    K13_COURSES
+    + K14_COURSES + K14_EXTRA_COURSES
+    + K15_COURSES + K15_EXTRA_COURSES
+    + K16_COURSES + K16_EXTRA_COURSES
     + FREE + GROUP_C
 ))
 
 students = load_student_profiles()
 lecturers = pd.read_csv(ROOT_DIR / "data" / "people" / "lecturer_for_class.csv")
-history = load_history(("hk231", "hk232", "hk241", "hk242", "hk251", "hk252"))
+history = load_history(("hk131", "hk132", "hk141", "hk142", "hk151", "hk152"))
 prerequisites = pd.read_csv(ROOT_DIR / "data" / "catalog" / "course_prerequisite.csv")
 course_names, course_credits, _ = course_catalog()
 
@@ -58,26 +58,26 @@ eligibility, _ = calculate_eligibility_for_schedule(
     history,
     course_credits,
     prerequisites,
-    {"231": K23_COURSES, "241": K24_COURSES, "251": K25_COURSES, "261": K26_COURSES},
+    {"13": K13_COURSES, "14": K14_COURSES, "15": K15_COURSES, "16": K16_COURSES},
     {
-        "241": K24_EXTRA_COURSES,
-        "251": K25_EXTRA_COURSES,
-        "261": K26_EXTRA_COURSES,
+        "14": K14_EXTRA_COURSES,
+        "15": K15_EXTRA_COURSES,
+        "16": K16_EXTRA_COURSES,
     },
     {
-        "231": {"FREE": FREE, "GROUP_C": GROUP_C},
-        "241": {"FREE": FREE, "GROUP_C": GROUP_C},
-        "251": {"FREE": FREE, "GROUP_C": GROUP_C},
-        "261": {"FREE": FREE, "GROUP_C": GROUP_C},
+        "13": {"FREE": FREE, "GROUP_C": GROUP_C},
+        "14": {"FREE": FREE, "GROUP_C": GROUP_C},
+        "15": {"FREE": FREE, "GROUP_C": GROUP_C},
+        "16": {"FREE": FREE, "GROUP_C": GROUP_C},
     },
     {
-        "231": {"FREE": FREE, "GROUP_C": GROUP_C},
-        "241": {"FREE": FREE, "GROUP_C": GROUP_C},
-        "251": {"FREE": FREE, "GROUP_C": GROUP_C},
-        "261": {"FREE": FREE, "GROUP_C": GROUP_C},
+        "13": {"FREE": FREE, "GROUP_C": GROUP_C},
+        "14": {"FREE": FREE, "GROUP_C": GROUP_C},
+        "15": {"FREE": FREE, "GROUP_C": GROUP_C},
+        "16": {"FREE": FREE, "GROUP_C": GROUP_C},
     },
     {
-        "231": {"FREE": 3, "GROUP_C": 6},
+        "13": {"FREE": 3, "GROUP_C": 6},
     },
     semester_code=SEMESTER,
 )
@@ -109,7 +109,7 @@ for course_code in COURSE_ORDER:
             "lecturer_name": lecturer_names.get(lecturer_id, "Unknown Name"),
         })
 
-output = ROOT_DIR / "generated" / "classes" / "class_hk261.csv"
+output = ROOT_DIR / "generated" / "classes" / "class_hk161.csv"
 pd.DataFrame(class_data).to_csv(output, index=False, encoding="utf-8-sig")
 print(f"Created {output.name}: {len(class_data)} classes")
 print(f"Maximum credits per student: {MAX_CREDITS}")

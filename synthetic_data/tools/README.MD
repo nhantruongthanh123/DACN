@@ -73,7 +73,7 @@ Hãy sao lưu hoặc commit `course.csv` trước khi chạy nếu cần giữ c
 ### `run_all.py`
 
 Tạo profile trước, sau đó chạy lần lượt generator class và enrollment theo
-từng học kỳ từ HK231 đến HK261, cuối cùng tổng hợp metric. Không tạo trước tất
+từng học kỳ từ HK131 đến HK161, cuối cùng tổng hợp metric. Không tạo trước tất
 cả class của các kỳ vì nhu cầu lớp ở kỳ sau phụ thuộc lịch sử enrollment ở kỳ
 trước. Script dừng ngay khi một generator lỗi và dùng `sys.executable`, do đó
 tự dùng đúng Python/môi trường ảo đã gọi script.
@@ -147,7 +147,7 @@ python synthetic_data/tools/generate_student_cohorts.py
 
 Lệnh cập nhật trực tiếp `student.csv`; chạy lại sẽ tái tạo cùng kết quả do seed
 cố định. Sau đó chạy `run_all.py` để cập nhật profile và dữ liệu class/
-enrollment. Các học kỳ hiện chỉ có lịch học cho K23–K26.
+enrollment. Các học kỳ hiện chỉ có lịch học cho K13–K16.
 
 ## Kiểm tra nhanh đầu vào
 

@@ -4,7 +4,7 @@ import numpy as np
 from pathlib import Path
 import sys
 
-ROOT_DIR = Path(__file__).resolve().parents[1]
+ROOT_DIR = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT_DIR / "rules"))
 
 from academic_rules import (
@@ -20,7 +20,7 @@ from academic_rules import (
 # 1. ĐỌC DỮ LIỆU ĐÃ CHUẨN BỊ
 # ==========================================
 df_student = load_student_profiles()
-df_class = pd.read_csv(ROOT_DIR / 'generated' / 'classes' / 'class_hk231.csv')
+df_class = pd.read_csv(ROOT_DIR / 'generated' / 'classes' / 'class_hk131.csv')
 df_assessment = pd.read_csv(ROOT_DIR / 'data' / 'catalog' / 'assessment.csv')
 
 # BỔ SUNG: Đọc thêm file course.csv để lấy cột độ khó (difficulty)
@@ -35,8 +35,8 @@ else:
     difficulty_dict = {}
     course_credits = {}
 
-# Đảm bảo chỉ lấy sinh viên K23
-df_k23 = df_student[df_student['student_id'].astype(str).str.startswith('23')].copy()
+# Đảm bảo chỉ lấy sinh viên K13
+df_k13 = df_student[df_student['student_id'].astype(str).str.startswith('13')].copy()
 
 # Xử lý cấu trúc điểm từ file assessment.csv thực tế của bạn
 course_assessments = {}
@@ -65,13 +65,13 @@ enrollment_id_counter = 1
 students_by_course = {}
 for course in df_class['course_code'].unique():
     if course == 'LA1003':
-        mask_take_english = df_k23.apply(
+        mask_take_english = df_k13.apply(
             lambda row: not can_skip_la1003(row['student_id'], row['base_score']),
             axis=1,
         )
-        students_for_course = df_k23[mask_take_english].copy()
+        students_for_course = df_k13[mask_take_english].copy()
     else:
-        students_for_course = df_k23.copy()
+        students_for_course = df_k13.copy()
     students_by_course[course] = students_for_course['student_id'].tolist()
 
 course_rosters = allocate_course_rosters(students_by_course, df_class)
@@ -90,7 +90,7 @@ for course, assignments in course_rosters.items():
                 'student_id': student_id,
                 'class_id': class_id,
                 'course_id': course,
-                'semester': semester_index("HK231"),
+                'semester': semester_index("HK131"),
                 'retaken': False,
             }
             rng = np.random.default_rng(int(hashlib.sha256(
@@ -144,7 +144,7 @@ end_cols = [
 component_cols = [col for col in df_enrollment.columns if col not in base_cols + end_cols]
 df_enrollment = df_enrollment[base_cols + component_cols + end_cols]
 
-output_file = ROOT_DIR / 'generated' / 'enrollments' / 'enrollment_hk231.csv'
+output_file = ROOT_DIR / 'generated' / 'enrollments' / 'enrollment_hk131.csv'
 df_enrollment.to_csv(output_file, index=False, encoding='utf-8-sig')
 
 print(f"=== ĐÃ TẠO THÀNH CÔNG BẢNG ĐĂNG KÝ HỌC PHẦN: {output_file} ===")

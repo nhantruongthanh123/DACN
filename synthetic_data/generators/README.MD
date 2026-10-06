@@ -21,7 +21,7 @@ Các đường dẫn sau tính từ thư mục gốc dự án:
 
 | Nhóm | Đường dẫn | Vai trò |
 | --- | --- | --- |
-| Sinh viên nguồn | `synthetic_data/data/people/student.csv` | Danh sách sinh viên, phân bổ vào khóa K13–K26. |
+| Sinh viên nguồn | `synthetic_data/data/people/student.csv` | Danh sách sinh viên, phân bổ vào khóa K13–K16. |
 | Profile | `synthetic_data/generated/student_profile/student_profiles.csv` | Background, personality, năng lực học tập, tiếng Anh boolean, ngày CTXH tích lũy theo kỳ và `base_score`. |
 | Giảng viên | `synthetic_data/data/people/lecturer_for_class.csv` | Giảng viên và bộ môn để phân công lớp. |
 | Danh mục | `synthetic_data/data/catalog/` | Môn học, tín chỉ, độ khó, cấu trúc điểm, tiên quyết và chương trình. |
@@ -34,7 +34,7 @@ Quy tắc chọn môn, học lại, tiên quyết và tín chỉ được trình
 
 ## Cách tạo lớp
 
-Từ HK232 trở đi, generator class thực hiện các bước sau:
+Từ HK132 trở đi, generator class thực hiện các bước sau:
 
 1. Đọc sinh viên, giảng viên và lịch sử enrollment/class các kỳ trước.
 2. Gọi `calculate_eligibility_for_schedule()` để lấy các môn mỗi sinh viên có
@@ -50,7 +50,7 @@ Từ HK232 trở đi, generator class thực hiện các bước sau:
 File class gồm: `class_id`, `course_code`, `course_name`, `semester`,
 `class_group`, `lecturer_id`, `lecturer_name`.
 
-HK231 là kỳ khởi tạo: lớp được tạo từ chương trình HK1 của K23, chưa cần đọc
+HK131 là kỳ khởi tạo: lớp được tạo từ chương trình HK1 của K13, chưa cần đọc
 lịch sử kết quả.
 
 ## Cách tạo enrollment và điểm
@@ -83,7 +83,7 @@ clip(academic ability + personality effect + subject effect
   `status` vẫn có để tương thích lịch sử. GPA học kỳ tính theo tín chỉ đăng ký;
   GPA tích lũy chỉ tính môn đã qua và mỗi course_code một lần.
 
-Nếu không có cấu hình assessment cho một môn, các kỳ HK231–HK252 mặc định dùng
+Nếu không có cấu hình assessment cho một môn, các kỳ HK131–HK152 mặc định dùng
 `cuoi_ky` với trọng số 100%.
 
 File enrollment thường gồm `enrollment_id`, `student_id`, `class_id`, các cột
@@ -116,21 +116,21 @@ môn sau học kỳ đó.
 
 `run_all.py` gọi `generate_academic_metrics.py` ở cuối. Các file metric nằm
 trong `synthetic_data/generated/metrics/`; metric chỉ bao phủ sinh viên có
-enrollment trong các học kỳ đã sinh. K13–K22 chưa có lịch sử và HK261 chưa có
-điểm cuối kỳ, nên lần lượt không bị suy đoán trạng thái dropout và không tham
+enrollment trong các học kỳ đã sinh. K17–K22 chưa có lịch sử; HK161 đã sinh đủ
+điểm cuối kỳ nên được tính như học kỳ hoàn tất.
 gia phân phối điểm.
 
 ## Các học kỳ
 
 | Kỳ | Class | Enrollment/điểm | Điểm khác biệt |
 | --- | --- | --- | --- |
-| HK231 | `generate_class_hk231.py` | `generate_enrollment_hk231.py` | K23 học HK1. Sinh viên được miễn LA1003 không được xếp vào môn này. |
-| HK232 | `generate_class_hk232.py` | `generate_enrollment_hk232.py` | Dùng lịch sử HK231; K23 học HK2, bắt đầu có học lại và môn bổ sung. |
-| HK241 | `generate_class_hk241.py` | `generate_enrollment_hk241.py` | K23 học HK3, K24 học HK1; xét lịch sử HK231–HK232. |
-| HK242 | `generate_class_hk242.py` | `generate_enrollment_hk242.py` | K23 HK4, K24 HK2; có tự chọn quản lý và tự chọn tự do. |
-| HK251 | `generate_class_hk251.py` | `generate_enrollment_hk251.py` | K23 HK5, K24 HK3, K25 HK1; hỗ trợ nhóm quản lý, tự do và nhóm C. |
-| HK252 | `generate_class_hk252.py` | `generate_enrollment_hk252.py` | K23 chọn một môn dự án liên ngành và phải tích lũy 3 tín chỉ quản lý. |
-| HK261 | `generate_class_hk261.py` | `generate_enrollment_hk261.py` | K23 HK7, K24 HK5, K25 HK3, K26 HK1; xét yêu cầu FREE 3 và GROUP_C 6 tín chỉ cho K23. |
+| HK131 | `generate_class_hk131.py` | `generate_enrollment_hk131.py` | K13 học HK1. Sinh viên được miễn LA1003 không được xếp vào môn này. |
+| HK132 | `generate_class_hk132.py` | `generate_enrollment_hk132.py` | Dùng lịch sử HK131; K13 học HK2, bắt đầu có học lại và môn bổ sung. |
+| HK141 | `generate_class_hk141.py` | `generate_enrollment_hk141.py` | K13 học HK3, K14 học HK1; xét lịch sử HK131–HK132. |
+| HK142 | `generate_class_hk142.py` | `generate_enrollment_hk142.py` | K13 HK4, K14 HK2; có tự chọn quản lý và tự chọn tự do. |
+| HK151 | `generate_class_hk151.py` | `generate_enrollment_hk151.py` | K13 HK5, K14 HK3, K15 HK1; hỗ trợ nhóm quản lý, tự do và nhóm C. |
+| HK152 | `generate_class_hk152.py` | `generate_enrollment_hk152.py` | K13 chọn một môn dự án liên ngành và phải tích lũy 3 tín chỉ quản lý. |
+| HK161 | `generate_class_hk161.py` | `generate_enrollment_hk161.py` | K13 HK7, K14 HK5, K15 HK3, K16 HK1; xét yêu cầu FREE 3 và GROUP_C 6 tín chỉ cho K13. |
 
 ### HK252: lựa chọn môn dự án
 
@@ -138,11 +138,9 @@ Với K23, rule chọn một môn khả dụng trong `CO3107`, `CO3109`, `CO3111
 mã băm của sinh viên. Do đó không phải mọi sinh viên đều học cùng một môn dự
 án.
 
-### HK261: chưa có điểm cuối kỳ
+### HK161: sinh đủ điểm cuối kỳ
 
-HK261 vẫn tạo đăng ký và một số điểm thành phần, nhưng cố ý để `final_score`
-và `status` là `NA`; cột `cuoi_ky` cũng không được sinh. Điều này thể hiện học
-kỳ đang diễn ra. Không nên dùng HK261 làm lịch sử đậu/rớt cho kỳ sau cho tới khi
+HK161 tạo đăng ký và đầy đủ điểm thành phần, `final_score`, grade và `status`.
 bổ sung điểm cuối kỳ.
 
 Danh sách sinh viên được phân bổ từ K13 đến K26; profile bao gồm toàn bộ các

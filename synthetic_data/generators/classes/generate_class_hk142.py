@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pandas as pd
 
-ROOT_DIR = Path(__file__).resolve().parents[1]
+ROOT_DIR = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT_DIR / "rules"))
 
 from curriculum_rules import (
@@ -23,30 +23,30 @@ from academic_rules import (
 )
 
 
-SEMESTER = "HK242"
-K23_COURSES = list(dict.fromkeys(
+SEMESTER = "HK142"
+K13_COURSES = list(dict.fromkeys(
     curriculum_courses("HK4")
 ))
-K23_EXTRA_COURSES = [
-    code for code in additional_courses("HK4") if code not in K23_COURSES
+K13_EXTRA_COURSES = [
+    code for code in additional_courses("HK4") if code not in K13_COURSES
 ]
-K24_COURSES = list(dict.fromkeys(
+K14_COURSES = list(dict.fromkeys(
     curriculum_courses("HK2")
 ))
-K24_EXTRA_COURSES = [
-    code for code in additional_courses("HK2") if code not in K24_COURSES
+K14_EXTRA_COURSES = [
+    code for code in additional_courses("HK2") if code not in K14_COURSES
 ]
 COURSE_ORDER = list(dict.fromkeys(
-    K23_COURSES
-    + K23_EXTRA_COURSES
+    K13_COURSES
+    + K13_EXTRA_COURSES
     + management_elective_courses("HK4")
     + free_elective_courses("HK4")
-    + K24_COURSES
-    + K24_EXTRA_COURSES
+    + K14_COURSES
+    + K14_EXTRA_COURSES
 ))
 students = load_student_profiles()
 lecturers = pd.read_csv(ROOT_DIR / "data" / "people" / "lecturer_for_class.csv")
-history = load_history(("hk231", "hk232", "hk241"))
+history = load_history(("hk131", "hk132", "hk141"))
 course_names, course_credits, _ = course_catalog()
 missing = [code for code in COURSE_ORDER if code not in course_names]
 if missing:
@@ -58,10 +58,10 @@ eligibility, _ = calculate_eligibility_for_schedule(
     history,
     course_credits,
     prerequisites,
-    {"231": K23_COURSES, "241": K24_COURSES},
-    {"231": K23_EXTRA_COURSES, "241": K24_EXTRA_COURSES},
-    {"231": {"MANAGEMENT": management_elective_courses("HK4")}},
-    {"231": {"FREE": free_elective_courses("HK4")}},
+    {"13": K13_COURSES, "14": K14_COURSES},
+    {"13": K13_EXTRA_COURSES, "14": K14_EXTRA_COURSES},
+    {"13": {"MANAGEMENT": management_elective_courses("HK4")}},
+    {"13": {"FREE": free_elective_courses("HK4")}},
     semester_code=SEMESTER,
 )
 COURSE_ORDER = list(dict.fromkeys(
@@ -93,9 +93,9 @@ for course_code in COURSE_ORDER:
             }
         )
 
-output = ROOT_DIR / "generated" / "classes" / "class_hk242.csv"
+output = ROOT_DIR / "generated" / "classes" / "class_hk142.csv"
 pd.DataFrame(class_data).to_csv(output, index=False, encoding="utf-8-sig")
 print(f"Created {output.name}: {len(class_data)} classes")
-print(f"K23 students: {sum(s.startswith('23') for s in eligibility)}")
-print(f"K24 students: {sum(s.startswith('24') for s in eligibility)}")
+print(f"K13 students: {sum(s.startswith('13') for s in eligibility)}")
+print(f"K14 students: {sum(s.startswith('14') for s in eligibility)}")
 print(f"Credit limit per student: {MAX_CREDITS}")

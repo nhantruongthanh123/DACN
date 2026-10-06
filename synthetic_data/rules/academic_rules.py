@@ -29,13 +29,13 @@ OPTIONAL_ENROLLMENT_THRESHOLD = 15
 OPTIONAL_16_CREDIT_PROBABILITY = 0.35
 ACCELERATION_BASE_SCORE = 8.0
 ACCELERATION_PROBABILITY = 0.35
-SEMESTER = "HK241"
-K23_COURSES = curriculum_courses("HK3")
-K23_EXTRA_COURSES = [
-    code for code in additional_courses("HK3") if code not in K23_COURSES
+SEMESTER = "HK141"
+K13_COURSES = curriculum_courses("HK3")
+K13_EXTRA_COURSES = [
+    code for code in additional_courses("HK3") if code not in K13_COURSES
 ]
-K24_COURSES = curriculum_courses("HK1")
-COURSE_ORDER = list(dict.fromkeys(K23_COURSES + K23_EXTRA_COURSES + K24_COURSES))
+K14_COURSES = curriculum_courses("HK1")
+COURSE_ORDER = list(dict.fromkeys(K13_COURSES + K13_EXTRA_COURSES + K14_COURSES))
 PROFILE_FIELDS = (
     "family_income",
     "financial_pressure",
@@ -202,7 +202,8 @@ GENERATOR_CONFIG = load_generator_config()
 def filter_students_from_2013(students):
     if "student_id" not in students:
         raise ValueError("Student data must contain a student_id column")
-    prefixes = students["student_id"].astype(str).str[:2]
+    student_ids = students["student_id"].astype(str).str.strip()
+    prefixes = student_ids.str[:2]
     valid_prefixes = prefixes.str.fullmatch(r"\d{2}")
     if not valid_prefixes.all():
         invalid_ids = students.loc[~valid_prefixes, "student_id"].head(5).tolist()
@@ -210,19 +211,36 @@ def filter_students_from_2013(students):
             "Student IDs must start with a two-digit cohort year; "
             f"invalid examples: {invalid_ids}"
         )
-    return students.loc[prefixes.astype(int) >= 13].copy()
+    filtered = students.copy()
+    filtered["student_id"] = student_ids
+    return filtered.loc[prefixes.astype(int) >= 13].copy()
+
+
+def cohort_year(student_id):
+    """Return the cohort year encoded by the first two ID digits."""
+    student_id = str(student_id).strip()
+    prefix = student_id[:2]
+    if not prefix.isdigit() or len(prefix) != 2:
+        raise ValueError(
+            f"Student ID must start with a two-digit cohort year: {student_id}"
+        )
+    return int(prefix)
 
 
 def load_student_profiles():
     """Load generated profiles for cohort 2013 onward."""
-    profile_file = (
-        PROFILE_OUTPUT_FILE if PROFILE_OUTPUT_FILE.exists() else LEGACY_PROFILE_FILE
-    )
-    if not profile_file.exists():
+    if not PROFILE_OUTPUT_FILE.exists():
         raise FileNotFoundError(
             "Student profiles are missing. Run tools/add_base_score.py first."
         )
-    students = pd.read_csv(profile_file, dtype={"student_id": str})
+    students = pd.read_csv(PROFILE_OUTPUT_FILE, dtype={"student_id": str})
+    required_columns = {"student_id", "name", "base_score"}
+    missing_columns = required_columns.difference(students.columns)
+    if missing_columns:
+        raise ValueError(
+            "student_profiles.csv is missing required columns: "
+            + ", ".join(sorted(missing_columns))
+        )
     return filter_students_from_2013(students)
 
 

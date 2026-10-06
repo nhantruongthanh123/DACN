@@ -5,7 +5,7 @@ import pandas as pd
 import sys
 from pathlib import Path
 
-ROOT_DIR = Path(__file__).resolve().parents[1]
+ROOT_DIR = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT_DIR / "rules"))
 from academic_rules import (
     balanced_class_sizes,
@@ -15,12 +15,12 @@ from academic_rules import (
 from curriculum_rules import course_catalog, curriculum_courses, get_department
 
 
-SEMESTER = "HK231"
+SEMESTER = "HK131"
 CURRICULUM_SEMESTER = "HK1"
 students = load_student_profiles()
 lecturers = pd.read_csv(ROOT_DIR / "data" / "people" / "lecturer_for_class.csv")
 student_ids = students.loc[
-    students["student_id"].str.startswith("23"), "student_id"
+    students["student_id"].str.startswith("13"), "student_id"
 ].tolist()
 course_names, _, _ = course_catalog()
 course_codes = curriculum_courses(CURRICULUM_SEMESTER)
@@ -41,7 +41,7 @@ for course_code in course_codes:
         course_demand = sum(
             not can_skip_la1003(student.student_id, student.base_score)
             for student in students.loc[
-                students["student_id"].str.startswith("23")
+                students["student_id"].str.startswith("13")
             ].itertuples(index=False)
         )
     else:
@@ -61,6 +61,6 @@ for course_code in course_codes:
             }
         )
 
-output = ROOT_DIR / "generated" / "classes" / "class_hk231.csv"
+output = ROOT_DIR / "generated" / "classes" / "class_hk131.csv"
 pd.DataFrame(class_data).to_csv(output, index=False, encoding="utf-8-sig")
 print(f"Created {output.name}: {len(class_data)} classes")

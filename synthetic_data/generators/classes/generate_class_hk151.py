@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pandas as pd
 
-ROOT_DIR = Path(__file__).resolve().parents[1]
+ROOT_DIR = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT_DIR / "rules"))
 
 from academic_rules import (
@@ -24,34 +24,34 @@ from curriculum_rules import (
 )
 
 
-SEMESTER = "HK251"
-K23_COURSES = curriculum_courses("HK5")
-K23_EXTRA_COURSES = [
-    code for code in additional_courses("HK5") if code not in K23_COURSES
+SEMESTER = "HK151"
+K13_COURSES = curriculum_courses("HK5")
+K13_EXTRA_COURSES = [
+    code for code in additional_courses("HK5") if code not in K13_COURSES
 ]
-K24_COURSES = curriculum_courses("HK3")
-K24_EXTRA_COURSES = [
-    code for code in additional_courses("HK3") if code not in K24_COURSES
+K14_COURSES = curriculum_courses("HK3")
+K14_EXTRA_COURSES = [
+    code for code in additional_courses("HK3") if code not in K14_COURSES
 ]
-K25_COURSES = curriculum_courses("HK1")
-K25_EXTRA_COURSES = [
-    code for code in additional_courses("HK1") if code not in K25_COURSES
+K15_COURSES = curriculum_courses("HK1")
+K15_EXTRA_COURSES = [
+    code for code in additional_courses("HK1") if code not in K15_COURSES
 ]
 COURSE_ORDER = list(dict.fromkeys(
-    K23_COURSES
-    + K23_EXTRA_COURSES
+    K13_COURSES
+    + K13_EXTRA_COURSES
     + management_elective_courses("HK4")
     + free_elective_courses("HK4")
     + group_c_elective_courses("HK5")
-    + K24_COURSES
-    + K24_EXTRA_COURSES
-    + K25_COURSES
-    + K25_EXTRA_COURSES
+    + K14_COURSES
+    + K14_EXTRA_COURSES
+    + K15_COURSES
+    + K15_EXTRA_COURSES
 ))
 
 students = load_student_profiles()
 lecturers = pd.read_csv(ROOT_DIR / "data" / "people" / "lecturer_for_class.csv")
-history = load_history(("hk231", "hk232", "hk241", "hk242"))
+history = load_history(("hk131", "hk132", "hk141", "hk142"))
 prerequisites = pd.read_csv(ROOT_DIR / "data" / "catalog" / "course_prerequisite.csv")
 course_names, course_credits, _ = course_catalog()
 
@@ -65,30 +65,30 @@ eligibility, _ = calculate_eligibility_for_schedule(
     course_credits,
     prerequisites,
     {
-        "231": K23_COURSES,
-        "241": K24_COURSES,
-        "251": K25_COURSES,
+        "13": K13_COURSES,
+        "14": K14_COURSES,
+        "15": K15_COURSES,
     },
     {
-        "231": K23_EXTRA_COURSES,
-        "241": K24_EXTRA_COURSES,
-        "251": K25_EXTRA_COURSES,
+        "13": K13_EXTRA_COURSES,
+        "14": K14_EXTRA_COURSES,
+        "15": K15_EXTRA_COURSES,
     },
     {
-        "231": {"MANAGEMENT": management_elective_courses("HK4")},
-        "241": {"MANAGEMENT": management_elective_courses("HK4")},
-        "251": {"MANAGEMENT": management_elective_courses("HK4")},
+        "13": {"MANAGEMENT": management_elective_courses("HK4")},
+        "14": {"MANAGEMENT": management_elective_courses("HK4")},
+        "15": {"MANAGEMENT": management_elective_courses("HK4")},
     },
     {
-        "231": {
+        "13": {
             "FREE": free_elective_courses("HK4"),
             "GROUP_C": group_c_elective_courses("HK5"),
         },
-        "241": {
+        "14": {
             "FREE": free_elective_courses("HK4"),
             "GROUP_C": group_c_elective_courses("HK5"),
         },
-        "251": {
+        "15": {
             "FREE": free_elective_courses("HK4"),
             "GROUP_C": group_c_elective_courses("HK5"),
         },
@@ -137,7 +137,7 @@ for course_code in COURSE_ORDER:
             }
         )
 
-output = ROOT_DIR / "generated" / "classes" / "class_hk251.csv"
+output = ROOT_DIR / "generated" / "classes" / "class_hk151.csv"
 pd.DataFrame(class_data).to_csv(
     output,
     index=False,
@@ -145,7 +145,7 @@ pd.DataFrame(class_data).to_csv(
 )
 
 print(f"Created {output.name}: {len(class_data)} classes")
-print(f"K23 students: {sum(s.startswith('23') for s in eligibility)}")
-print(f"K24 students: {sum(s.startswith('24') for s in eligibility)}")
-print(f"K25 students: {sum(s.startswith('25') for s in eligibility)}")
+print(f"K13 students: {sum(s.startswith('13') for s in eligibility)}")
+print(f"K14 students: {sum(s.startswith('14') for s in eligibility)}")
+print(f"K15 students: {sum(s.startswith('15') for s in eligibility)}")
 print(f"Credit limit per student: {MAX_CREDITS}")

@@ -8,22 +8,21 @@ ROOT_DIR = Path(__file__).resolve().parents[1]
 # Danh sách các file cần chạy theo đúng thứ tự
 scripts = [
     "../tools/add_base_score.py",
-    "generate_class_hk231.py",
-    "generate_enrollment_hk231.py",
-    "generate_class_hk232.py",
-    "generate_enrollment_hk232.py",
-    "generate_class_hk241.py",
-    "generate_enrollment_hk241.py",
-    "generate_class_hk242.py",
-    "generate_enrollment_hk242.py",
-    "generate_class_hk251.py",
-    "generate_enrollment_hk251.py",
-    "generate_class_hk252.py",
-    "generate_enrollment_hk252.py",
-    "generate_class_hk261.py",
-    "generate_enrollment_hk261.py",
+    "classes/generate_class_hk131.py",
+    "enrollments/generate_enrollment_hk131.py",
+    "classes/generate_class_hk132.py",
+    "enrollments/generate_enrollment_hk132.py",
+    "classes/generate_class_hk141.py",
+    "enrollments/generate_enrollment_hk141.py",
+    "classes/generate_class_hk142.py",
+    "enrollments/generate_enrollment_hk142.py",
+    "classes/generate_class_hk151.py",
+    "enrollments/generate_enrollment_hk151.py",
+    "classes/generate_class_hk152.py",
+    "enrollments/generate_enrollment_hk152.py",
+    "classes/generate_class_hk161.py",
+    "enrollments/generate_enrollment_hk161.py",
     "../tools/generate_academic_metrics.py",
-
 ]
 
 for script in scripts:
