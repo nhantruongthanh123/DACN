@@ -1,4 +1,3 @@
-import math
 import sys
 from pathlib import Path
 
@@ -7,7 +6,12 @@ import pandas as pd
 ROOT_DIR = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT_DIR / "rules"))
 
-from academic_rules import calculate_eligibility_for_schedule, load_history
+from academic_rules import (
+    balanced_class_sizes,
+    calculate_eligibility_for_schedule,
+    load_history,
+    load_student_profiles,
+)
 from curriculum_rules import (
     MAX_CREDITS,
     additional_courses,
@@ -43,7 +47,7 @@ COURSE_ORDER = list(dict.fromkeys(
     + FREE + GROUP_C
 ))
 
-students = pd.read_csv(ROOT_DIR / "data" / "people" / "student_base_score.csv", dtype={"student_id": str})
+students = load_student_profiles()
 lecturers = pd.read_csv(ROOT_DIR / "data" / "people" / "lecturer_for_class.csv")
 history = load_history(("hk231", "hk232", "hk241", "hk242", "hk251"))
 prerequisites = pd.read_csv(ROOT_DIR / "data" / "catalog" / "course_prerequisite.csv")
@@ -71,6 +75,7 @@ eligibility, _ = calculate_eligibility_for_schedule(
     },
     {"231": {"MANAGEMENT": 3}},
     {"231": {"INTERDISCIPLINARY_PROJECT": K23_PROJECT_OPTIONS}},
+    semester_code=SEMESTER,
 )
 
 COURSE_ORDER = list(dict.fromkeys(
@@ -85,12 +90,11 @@ for course_code in COURSE_ORDER:
     demand = sum(course_code in selected for selected in eligibility.values())
     if not demand:
         continue
-    size_limit = 40 if course_code.startswith(("LA", "PH")) else 120
     lecturer_ids = lecturers.loc[
         lecturers["departments"] == get_department(course_code),
         "lecturer_id",
     ].tolist() or ["UNKNOWN_ID"]
-    for index in range(1, math.ceil(demand / size_limit) + 1):
+    for index, _ in enumerate(balanced_class_sizes(demand), start=1):
         group = f"L{index:02d}"
         lecturer_id = lecturer_ids[(index - 1) % len(lecturer_ids)]
         class_data.append({

@@ -57,6 +57,64 @@ Module này ghép lịch sử enrollment với lớp đã tạo để biết mô
 tiếp theo. Các generator class và enrollment gọi cùng hàm này để danh sách lớp
 mở và dữ liệu đăng ký không mâu thuẫn.
 
+Module cũng cung cấp rule dùng chung để tạo hồ sơ sinh viên, tính điểm môn,
+noise, grade và GPA. Tham số được đọc từ
+`synthetic_data/config/generator_config.json`; generator lớp/đăng ký dùng chung
+một cấu hình để điều chỉnh nhất quán giữa các học kỳ.
+
+### Cấu hình hồ sơ và điểm
+
+- Phân phối `family_income`, `financial_pressure`, `living_condition`,
+  personality và academic level có thể chỉnh trong JSON. Các phân phối phải
+  không âm và tổng bằng `1.0`.
+- `academic.base_scores` ánh xạ academic level 1–5 sang điểm nền; `math_level`
+  và `english_level` được sinh từ `academic_level` cộng nhiễu Normal rồi giới
+  hạn trong khoảng 1–5.
+- `personality_weights` là trọng số cho discipline, motivation, stress và
+  social activity sau khi chuẩn hóa trait về `[-1, 1]`. Mặc định social activity
+  không ảnh hưởng trực tiếp tới điểm.
+- `difficulty.course_overrides` cho phép đặt difficulty từng `course_code` theo
+  thang 1–5. Môn không có override dùng cột `difficulty` trong `course.csv`,
+  chuẩn hóa theo `catalog_min`/`catalog_max`. Difficulty trừ điểm; mức trừ giảm
+  khi academic/personality strength cao (academic level, discipline, motivation
+  cao hoặc stress thấp).
+- Ví dụ: đặt `"CO1005": 4` trong `course_overrides` để gán môn CO1005 mức 4
+  (mức 5 là khó nhất). Để giữ mức danh mục, không thêm môn vào map override.
+- `calibration_targets` chỉ là khoảng để đánh giá kết quả GPA sau khi sinh,
+  không ép sinh viên vào nhóm GPA.
+- `noise` điều chỉnh tỷ lệ Normal/high-deviation, sigma và hướng lệch. `seed`
+  giúp hồ sơ sinh viên có thể tái tạo giữa các lần chạy.
+- `grade_scale` dùng khoảng lower-inclusive, upper-exclusive; riêng mốc tối đa
+  được tính vào grade cuối. F dưới 4.0 là trượt; từ 4.0 trở lên là qua môn.
+  `retake_bonus` mặc định bằng 0.
+
+Chạy `python synthetic_data/tools/add_base_score.py` để tạo lại
+`student_base_score.csv` cùng các trường hồ sơ. Khi thay đổi rule hoặc config,
+chạy `python synthetic_data/tools/run_all.py` để sinh lại các học kỳ nhất quán.
+
+### Điều kiện tiến độ, đồ án và dropout
+
+`student_progress` cấu hình các kỳ được theo dõi, kỳ bắt đầu theo khóa, ngưỡng
+CTXH, xác suất đạt tiếng Anh và chính sách dropout/tốt nghiệp. Profile xuất ra
+`english_pass` dạng boolean và `ctxh_days_by_semester` dạng JSON array với ngày
+CTXH cộng dồn. Ngày tăng theo từng kỳ với kỳ vọng phụ thuộc discipline,
+motivation, social activity và stress.
+
+Các môn đồ án trong `thesis_course_codes` bị loại khỏi eligibility nếu tiếng
+Anh chưa đạt hoặc CTXH tích lũy trước kỳ học chưa đủ 12 ngày. Tốt nghiệp yêu cầu
+15 ngày CTXH, tiếng Anh, các môn `required` trong curriculum và mã đồ án tốt
+nghiệp cấu hình. Nếu đến kỳ có môn đồ án nhưng chưa đủ điều kiện, profile có
+xác suất cấu hình được (mặc định 80%) không đăng ký môn nào trong kỳ đó, mô
+phỏng việc phải chờ và tốt nghiệp trễ. Tốt nghiệp chuẩn sau 8 học kỳ; buộc thôi
+học khi đã qua 12 học kỳ hoặc có hai kỳ liên tiếp dưới 10 tín chỉ pass. Dropout
+tự nguyện dùng xác suất 30% trong nhóm background/học lực thấp và trọng số
+nguyên nhân background 95%, academic 5%.
+
+`generate_academic_metrics.py` tạo tiến độ từng kỳ, metric từng sinh viên,
+phân phối điểm theo course/toàn trường và tổng hợp dropout/tốt nghiệp. Mẫu số
+chỉ gồm sinh viên có enrollment trong các kỳ đã sinh; điểm chưa chấm ở kỳ đang
+diễn ra bị loại khỏi phân phối điểm.
+
 ### Lịch sử học tập
 
 `load_history(semesters)` đọc các cặp file sau, sau đó ghép theo `class_id` để
@@ -112,8 +170,15 @@ generator mới nên ưu tiên `calculate_eligibility_for_schedule(...)`.
 | --- | --- | --- |
 | Tạo class | Cả hai module | Chọn môn cần mở theo chương trình và sinh viên đủ điều kiện; phân bộ môn để gán giảng viên. |
 | Tạo enrollment | Cả hai module | Chọn sinh viên/môn, kiểm tra học lại, tiên quyết và tín chỉ. |
-| Sinh điểm | `curriculum_rules.py` gián tiếp | Generator dùng `course_catalog().difficulty` cùng `base_score`, nhiễu ngẫu nhiên và điểm cộng học lại để sinh điểm thành phần/final score. |
+| Sinh điểm | `academic_rules.py` và `generator_config.json` | Dùng profile academic/personality, subject ability, difficulty đã chuẩn hóa, noise cấu hình được, grade scale và trạng thái học lại. |
 
-Khi thay đổi CSV danh mục hoặc logic trong hai module này, hãy chạy lại
+Enrollment mới bổ sung `course_id`, `semester`, `retaken`, `letter_grade`,
+`gpa_4`, `passed`, `semester_gpa_4` và `final_gpa_4`; `status` vẫn được giữ để
+các rule lịch sử tiếp tục hoạt động. GPA học kỳ được tính theo tín chỉ đăng ký;
+GPA tích lũy chỉ tính môn đã qua, theo tín chỉ và không đếm lặp course_code.
+HK261 đang diễn ra nên grade/GPA học kỳ để trống, GPA tích lũy vẫn phản ánh các
+học kỳ đã hoàn tất.
+
+Khi thay đổi CSV danh mục, file config hoặc logic trong hai module này, hãy chạy lại
 `python synthetic_data/tools/run_all.py` để tái tạo dữ liệu class và enrollment
 nhất quán.

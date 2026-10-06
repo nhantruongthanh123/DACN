@@ -1,4 +1,3 @@
-import math
 import sys
 from pathlib import Path
 
@@ -16,7 +15,12 @@ from curriculum_rules import (
     free_elective_courses,
     get_department,
 )
-from academic_rules import calculate_eligibility_for_schedule, load_history
+from academic_rules import (
+    balanced_class_sizes,
+    calculate_eligibility_for_schedule,
+    load_history,
+    load_student_profiles,
+)
 
 
 SEMESTER = "HK242"
@@ -40,7 +44,7 @@ COURSE_ORDER = list(dict.fromkeys(
     + K24_COURSES
     + K24_EXTRA_COURSES
 ))
-students = pd.read_csv(ROOT_DIR / "data" / "people" / "student_base_score.csv", dtype={"student_id": str})
+students = load_student_profiles()
 lecturers = pd.read_csv(ROOT_DIR / "data" / "people" / "lecturer_for_class.csv")
 history = load_history(("hk231", "hk232", "hk241"))
 course_names, course_credits, _ = course_catalog()
@@ -58,6 +62,7 @@ eligibility, _ = calculate_eligibility_for_schedule(
     {"231": K23_EXTRA_COURSES, "241": K24_EXTRA_COURSES},
     {"231": {"MANAGEMENT": management_elective_courses("HK4")}},
     {"231": {"FREE": free_elective_courses("HK4")}},
+    semester_code=SEMESTER,
 )
 COURSE_ORDER = list(dict.fromkeys(
     COURSE_ORDER
@@ -70,11 +75,10 @@ for course_code in COURSE_ORDER:
     demand = sum(course_code in courses for courses in eligibility.values())
     if not demand:
         continue
-    size_limit = 40 if course_code.startswith(("LA", "PH")) else 120
     lecturer_ids = lecturers.loc[
         lecturers["departments"] == get_department(course_code), "lecturer_id"
     ].tolist() or ["UNKNOWN_ID"]
-    for index in range(1, math.ceil(demand / size_limit) + 1):
+    for index, _ in enumerate(balanced_class_sizes(demand), start=1):
         group = f"L{index:02d}"
         lecturer_id = lecturer_ids[(index - 1) % len(lecturer_ids)]
         class_data.append(
@@ -92,6 +96,6 @@ for course_code in COURSE_ORDER:
 output = ROOT_DIR / "generated" / "classes" / "class_hk242.csv"
 pd.DataFrame(class_data).to_csv(output, index=False, encoding="utf-8-sig")
 print(f"Created {output.name}: {len(class_data)} classes")
-print(f"K23 students: {sum(s.startswith('231') for s in eligibility)}")
-print(f"K24 students: {sum(s.startswith('241') for s in eligibility)}")
+print(f"K23 students: {sum(s.startswith('23') for s in eligibility)}")
+print(f"K24 students: {sum(s.startswith('24') for s in eligibility)}")
 print(f"Credit limit per student: {MAX_CREDITS}")

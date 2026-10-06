@@ -1,7 +1,11 @@
 from pathlib import Path
+import json
 import hashlib
+import json
+import math
 import sys
 
+import numpy as np
 import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -17,6 +21,10 @@ from curriculum_rules import (
 
 ROOT_DIR = Path(__file__).resolve().parents[1]
 DATA_DIR = ROOT_DIR / "data" / "people"
+CONFIG_FILE = ROOT_DIR / "config" / "generator_config.json"
+PROFILE_OUTPUT_DIR = ROOT_DIR / "generated" / "student_profile"
+PROFILE_OUTPUT_FILE = PROFILE_OUTPUT_DIR / "student_profiles.csv"
+LEGACY_PROFILE_FILE = DATA_DIR / "student_base_score.csv"
 OPTIONAL_ENROLLMENT_THRESHOLD = 15
 OPTIONAL_16_CREDIT_PROBABILITY = 0.35
 ACCELERATION_BASE_SCORE = 8.0
@@ -28,6 +36,760 @@ K23_EXTRA_COURSES = [
 ]
 K24_COURSES = curriculum_courses("HK1")
 COURSE_ORDER = list(dict.fromkeys(K23_COURSES + K23_EXTRA_COURSES + K24_COURSES))
+PROFILE_FIELDS = (
+    "family_income",
+    "financial_pressure",
+    "living_condition",
+    "discipline",
+    "motivation",
+    "stress",
+    "social_activity",
+    "academic_level",
+    "math_level",
+    "english_level",
+)
+
+
+def load_generator_config():
+    with CONFIG_FILE.open(encoding="utf-8") as config_file:
+        config = json.load(config_file)
+
+    def validate_distribution(name, values):
+        if (
+            not values
+            or any(not isinstance(value, (int, float)) or value < 0 for value in values)
+            or not math.isclose(sum(values), 1.0, abs_tol=1e-9)
+        ):
+            raise ValueError(f"{name} probabilities must be non-negative and sum to 1")
+
+    personality = config["personality"]
+    scale = personality["scale"]
+    for trait in ("discipline", "motivation", "stress", "social_activity"):
+        if len(personality[trait]) != len(scale):
+            raise ValueError(f"personality.{trait} must match personality.scale")
+        validate_distribution(f"personality.{trait}", personality[trait])
+
+    academic = config["academic"]
+    if len(academic["distribution"]) != 5 or len(academic["base_scores"]) != 5:
+        raise ValueError("academic distribution and base_scores must have five values")
+    validate_distribution("academic.distribution", academic["distribution"])
+    if (
+        academic["subject_sigma"] < 0
+        or academic["base_scores"] != sorted(academic["base_scores"])
+    ):
+        raise ValueError("academic subject_sigma must be non-negative and base_scores ordered")
+
+    for name, distribution in config["background"].items():
+        if len(distribution["values"]) != len(distribution["probabilities"]):
+            raise ValueError(f"background.{name} values and probabilities must match")
+        validate_distribution(
+            f"background.{name}",
+            distribution["probabilities"],
+        )
+
+    noise = config["noise"]
+    validate_distribution(
+        "noise population",
+        [noise["normal_ratio"], noise["high_deviation_ratio"]],
+    )
+    validate_distribution(
+        "noise direction",
+        [noise["low_direction_ratio"], noise["high_direction_ratio"]],
+    )
+    difficulty = config["difficulty"]
+    if not 0 <= difficulty["resilience"] <= 1:
+        raise ValueError("difficulty.resilience must be between 0 and 1")
+    if (
+        difficulty["catalog_min"] >= difficulty["catalog_max"]
+        or difficulty["min_level"] >= difficulty["max_level"]
+        or difficulty["max_penalty"] < 0
+    ):
+        raise ValueError("difficulty ranges must be increasing and penalty non-negative")
+    if any(
+        not difficulty["min_level"] <= float(level) <= difficulty["max_level"]
+        for level in difficulty["course_overrides"].values()
+    ):
+        raise ValueError("course difficulty overrides must be within the configured levels")
+    if noise["normal_sigma"] < 0 or noise["high_sigma"] < 0:
+        raise ValueError("noise sigma values must be non-negative")
+    if config["score"]["min"] >= config["score"]["max"]:
+        raise ValueError("score.min must be less than score.max")
+
+    progress = config["student_progress"]
+    semesters = progress["observed_semesters"]
+    if (
+        not semesters
+        or len(semesters) != len(set(semesters))
+        or semesters != sorted(semesters, key=lambda value: int(value[2:]))
+    ):
+        raise ValueError(
+            "student_progress.observed_semesters must be unique and ordered"
+        )
+    if any(
+        start not in semesters
+        for start in progress["cohort_start_semester"].values()
+    ):
+        raise ValueError(
+            "cohort start semesters must be present in observed_semesters"
+        )
+    ctxh = progress["ctxh"]
+    if (
+        ctxh["minimum_for_thesis"] < 0
+        or ctxh["minimum_for_graduation"] < ctxh["minimum_for_thesis"]
+        or ctxh["minimum_expected_days_per_semester"] < 0
+        or ctxh["maximum_expected_days_per_semester"]
+        < ctxh["minimum_expected_days_per_semester"]
+        or any(weight < 0 for weight in ctxh["personality_weights"].values())
+        or not math.isclose(
+            sum(ctxh["personality_weights"].values()), 1.0, abs_tol=1e-9
+        )
+    ):
+        raise ValueError("Invalid CTXH progress configuration")
+    if not 0 <= progress["dropout"]["voluntary_probability"] <= 1:
+        raise ValueError("voluntary_dropout_probability must be between 0 and 1")
+    if not math.isclose(
+        sum(progress["dropout"]["voluntary_reason_weights"].values()),
+        1.0,
+        abs_tol=1e-9,
+    ):
+        raise ValueError("voluntary dropout reason weights must sum to 1")
+    english = progress["english"]
+    if (
+        any(
+            english[name] < 0
+            for name in (
+                "base_probability",
+                "background_weight",
+                "english_skill_weight",
+                "academic_weight",
+                "personality_weight",
+            )
+        )
+        or english["base_probability"] > 1
+    ):
+        raise ValueError("Invalid English eligibility probability configuration")
+    graduation = progress["graduation"]
+    if (
+        graduation["standard_semesters"] <= 0
+        or graduation["dismissal_after_semesters"]
+        < graduation["standard_semesters"]
+        or graduation["minimum_passed_credits_per_semester"] < 0
+        or not 0 <= graduation[
+            "ineligible_thesis_empty_semester_probability"
+        ] <= 1
+        or not graduation["thesis_course_codes"]
+        or not graduation["graduation_project_codes"]
+    ):
+        raise ValueError("Invalid graduation progress configuration")
+
+    grade_scale = config["grade_scale"]
+    if (
+        not grade_scale
+        or grade_scale[0]["min"] != config["score"]["min"]
+        or grade_scale[-1]["max"] != config["score"]["max"]
+        or any(
+            lower["max"] != upper["min"]
+            for lower, upper in zip(grade_scale, grade_scale[1:])
+        )
+    ):
+        raise ValueError("grade_scale must continuously cover the configured score range")
+    return config
+
+
+GENERATOR_CONFIG = load_generator_config()
+
+
+def filter_students_from_2013(students):
+    if "student_id" not in students:
+        raise ValueError("Student data must contain a student_id column")
+    prefixes = students["student_id"].astype(str).str[:2]
+    valid_prefixes = prefixes.str.fullmatch(r"\d{2}")
+    if not valid_prefixes.all():
+        invalid_ids = students.loc[~valid_prefixes, "student_id"].head(5).tolist()
+        raise ValueError(
+            "Student IDs must start with a two-digit cohort year; "
+            f"invalid examples: {invalid_ids}"
+        )
+    return students.loc[prefixes.astype(int) >= 13].copy()
+
+
+def load_student_profiles():
+    """Load generated profiles for cohort 2013 onward."""
+    profile_file = (
+        PROFILE_OUTPUT_FILE if PROFILE_OUTPUT_FILE.exists() else LEGACY_PROFILE_FILE
+    )
+    if not profile_file.exists():
+        raise FileNotFoundError(
+            "Student profiles are missing. Run tools/add_base_score.py first."
+        )
+    students = pd.read_csv(profile_file, dtype={"student_id": str})
+    return filter_students_from_2013(students)
+
+
+def balanced_class_sizes(demand, max_size=120):
+    """Use the fewest sections possible and balance them within the capacity limit."""
+    demand = int(demand)
+    max_size = int(max_size)
+    if demand < 0:
+        raise ValueError("Class demand cannot be negative")
+    if max_size <= 0:
+        raise ValueError("Class capacity must be positive")
+    if demand == 0:
+        return []
+    class_count = math.ceil(demand / max_size)
+    base_size, remainder = divmod(demand, class_count)
+    return [
+        base_size + (1 if index < remainder else 0)
+        for index in range(class_count)
+    ]
+
+
+def students_by_course_from_eligibility(eligibility):
+    students_by_course = {}
+    for student_id, courses in eligibility.items():
+        for course_code in courses:
+            students_by_course.setdefault(course_code, []).append(student_id)
+    return students_by_course
+
+
+def allocate_course_rosters(students_by_course, classes, max_size=120):
+    """Assign every eligible student to an existing same-course class within capacity."""
+    required_columns = {"class_id", "course_code"}
+    if not required_columns.issubset(classes.columns):
+        missing = sorted(required_columns - set(classes.columns))
+        raise ValueError(f"Class data is missing columns: {', '.join(missing)}")
+    if classes["class_id"].duplicated().any():
+        duplicates = classes.loc[
+            classes["class_id"].duplicated(), "class_id"
+        ].head(5).tolist()
+        raise ValueError(f"Duplicate class IDs: {duplicates}")
+
+    classes_by_course = {
+        course_code: group["class_id"].tolist()
+        for course_code, group in classes.groupby("course_code", sort=False)
+    }
+    rosters = {}
+    for course_code, student_ids in students_by_course.items():
+        student_ids = list(student_ids)
+        if not student_ids:
+            continue
+        if len(student_ids) != len(set(student_ids)):
+            raise ValueError(f"Duplicate eligible student for {course_code}")
+        class_ids = classes_by_course.get(course_code, [])
+        if not class_ids:
+            raise ValueError(
+                f"No existing class is available for {len(student_ids)} "
+                f"eligible students in {course_code}"
+            )
+        sizes = balanced_class_sizes(len(student_ids), max_size)
+        if len(class_ids) < len(sizes):
+            raise ValueError(
+                f"{course_code} needs {len(sizes)} classes for "
+                f"{len(student_ids)} students, but only {len(class_ids)} exist"
+            )
+        assignments = []
+        offset = 0
+        for class_id, size in zip(class_ids, sizes):
+            assignments.append((class_id, student_ids[offset:offset + size]))
+            offset += size
+        rosters[course_code] = assignments
+    return rosters
+
+
+def _stable_seed(student_id, config, salt):
+    value = f"{config['seed']}:{student_id}:{salt}".encode("utf-8")
+    return int(hashlib.sha256(value).hexdigest()[:8], 16)
+
+
+def _base_score_for_level(level, config):
+    base_scores = config["academic"]["base_scores"]
+    lower = int(math.floor(level))
+    upper = int(math.ceil(level))
+    if lower == upper:
+        return float(base_scores[lower - 1])
+    fraction = level - lower
+    return (
+        float(base_scores[lower - 1]) * (1 - fraction)
+        + float(base_scores[upper - 1]) * fraction
+    )
+
+
+def generate_student_profile(student_id, config=None):
+    config = config or GENERATOR_CONFIG
+    profile = {}
+    for field, distribution in config["background"].items():
+        rng = np.random.default_rng(_stable_seed(student_id, config, field))
+        profile[field] = rng.choice(
+            distribution["values"],
+            p=distribution["probabilities"],
+        )
+    for field in ("discipline", "motivation", "stress", "social_activity"):
+        rng = np.random.default_rng(_stable_seed(student_id, config, field))
+        profile[field] = int(rng.choice(
+            config["personality"]["scale"],
+            p=config["personality"][field],
+        ))
+
+    rng = np.random.default_rng(_stable_seed(student_id, config, "academic_level"))
+    academic_level = int(rng.choice(
+        [1, 2, 3, 4, 5],
+        p=config["academic"]["distribution"],
+    ))
+    profile["academic_level"] = academic_level
+    for field in ("math_level", "english_level"):
+        subject_rng = np.random.default_rng(
+            _stable_seed(student_id, config, field)
+        )
+        profile[field] = int(np.clip(
+            round(subject_rng.normal(
+                academic_level,
+                config["academic"]["subject_sigma"],
+            )),
+            1,
+            5,
+        ))
+    progress_config = config["student_progress"]
+    background_scores = progress_config["english"]["background_scores"]
+    background_strength = float(np.mean([
+        background_scores[field][profile[field]]
+        for field in background_scores
+    ]))
+    personality_strength = _progress_personality_strength(profile, progress_config)
+    english_probability = (
+        progress_config["english"]["base_probability"]
+        + progress_config["english"]["background_weight"] * background_strength
+        + progress_config["english"]["english_skill_weight"]
+        * ((profile["english_level"] - 1) / 4)
+        + progress_config["english"]["academic_weight"]
+        * ((profile["academic_level"] - 1) / 4)
+        + progress_config["english"]["personality_weight"]
+        * personality_strength
+    )
+    english_rng = np.random.default_rng(
+        _stable_seed(student_id, config, "english_eligibility")
+    )
+    profile["english_pass"] = bool(
+        english_rng.random() < np.clip(english_probability, 0.0, 1.0)
+    )
+    profile["ctxh_days_by_semester"] = _generate_ctxh_progress(
+        student_id, profile, config
+    )
+    dropout_semester, dropout_reason = _generate_voluntary_dropout(
+        student_id, profile, config
+    )
+    profile["voluntary_dropout_semester"] = dropout_semester or ""
+    profile["voluntary_dropout_reason"] = dropout_reason or ""
+    return profile
+
+
+def _progress_personality_strength(profile, progress_config):
+    weights = progress_config["ctxh"]["personality_weights"]
+    trait_strengths = {
+        "discipline": (profile["discipline"] - 1) / 4,
+        "motivation": (profile["motivation"] - 1) / 4,
+        "social_activity": (profile["social_activity"] - 1) / 4,
+        "stress": (5 - profile["stress"]) / 4,
+    }
+    total_weight = sum(weights.values())
+    if total_weight <= 0:
+        raise ValueError("CTXH personality weights must sum to a positive value")
+    return float(sum(
+        weights[trait] * trait_strengths[trait]
+        for trait in weights
+    ) / total_weight)
+
+
+def _generate_ctxh_progress(student_id, profile, config):
+    progress_config = config["student_progress"]
+    start_semester = progress_config["cohort_start_semester"].get(
+        str(student_id)[:2]
+    )
+    if start_semester is None:
+        return []
+    start_index = semester_index(start_semester)
+    semesters = [
+        semester
+        for semester in progress_config["observed_semesters"]
+        if semester_index(semester) >= start_index
+    ]
+    ctxh_config = progress_config["ctxh"]
+    personality_strength = _progress_personality_strength(
+        profile, progress_config
+    )
+    expected_days = (
+        ctxh_config["minimum_expected_days_per_semester"]
+        + personality_strength
+        * (
+            ctxh_config["maximum_expected_days_per_semester"]
+            - ctxh_config["minimum_expected_days_per_semester"]
+        )
+    )
+    cumulative_days = 0
+    progress = []
+    for semester in semesters:
+        rng = np.random.default_rng(
+            _stable_seed(student_id, config, f"ctxh:{semester}")
+        )
+        cumulative_days += int(rng.poisson(expected_days))
+        progress.append({
+            "semester": semester,
+            "cumulative_days": cumulative_days,
+        })
+    return progress
+
+
+def _generate_voluntary_dropout(student_id, profile, config):
+    progress_config = config["student_progress"]
+    dropout_config = progress_config["dropout"]
+    background_scores = progress_config["english"]["background_scores"]
+    background_strength = float(np.mean([
+        background_scores[field][profile[field]]
+        for field in background_scores
+    ]))
+    at_risk = (
+        background_strength <= dropout_config["low_background_score_max"]
+        or profile["academic_level"]
+        <= dropout_config["low_academic_level_max"]
+    )
+    if not at_risk:
+        return None, None
+
+    rng = np.random.default_rng(
+        _stable_seed(student_id, config, "voluntary_dropout")
+    )
+    if rng.random() >= dropout_config["voluntary_probability"]:
+        return None, None
+
+    reason_weights = dropout_config["voluntary_reason_weights"]
+    reasons = list(reason_weights)
+    weights = np.array([reason_weights[reason] for reason in reasons], dtype=float)
+    reason = str(rng.choice(reasons, p=weights))
+    start_semester = progress_config["cohort_start_semester"].get(
+        str(student_id)[:2]
+    )
+    if start_semester is None:
+        return None, None
+    start_index = semester_index(start_semester)
+    semesters = [
+        semester
+        for semester in progress_config["observed_semesters"]
+        if semester_index(semester) >= start_index
+    ]
+    if not semesters:
+        return None, None
+    return str(rng.choice(semesters)), reason
+
+
+def _student_value(student, field, default=None):
+    if hasattr(student, "get"):
+        return student.get(field, default)
+    return getattr(student, field, default)
+
+
+def ctxh_days_before_semester(student, semester_code):
+    progress = _student_value(student, "ctxh_days_by_semester", [])
+    if progress is None or (
+        not isinstance(progress, (list, str)) and pd.isna(progress)
+    ):
+        progress = []
+    if isinstance(progress, str):
+        try:
+            progress = json.loads(progress) if progress else []
+        except json.JSONDecodeError as error:
+            raise ValueError("ctxh_days_by_semester must contain a JSON array") from error
+    if not isinstance(progress, list):
+        raise ValueError("ctxh_days_by_semester must be an array")
+    current_index = semester_index(semester_code)
+    return max(
+        (
+            int(entry["cumulative_days"])
+            for entry in progress
+            if semester_index(entry["semester"]) < current_index
+        ),
+        default=0,
+    )
+
+
+def _has_two_consecutive_low_credit_semesters(
+    student_id, history, credits, semester_code, config
+):
+    if history.empty or "semester" not in history:
+        return False
+    progress_config = config["student_progress"]
+    start_semester = progress_config["cohort_start_semester"].get(
+        str(student_id)[:2]
+    )
+    if start_semester is None:
+        return False
+    current_index = semester_index(semester_code)
+    start_index = semester_index(start_semester)
+    completed_semesters = [
+        semester
+        for semester in progress_config["observed_semesters"]
+        if start_index <= semester_index(semester) < current_index
+    ]
+    if current_index - start_index >= progress_config["graduation"][
+        "dismissal_after_semesters"
+    ]:
+        return True
+
+    student_history = history[history["student_id"] == student_id]
+    consecutive_low = 0
+    for semester in completed_semesters:
+        term_index = semester_index(semester)
+        term_rows = student_history[student_history["semester"] == term_index]
+        passed = term_rows[
+            term_rows["status"].astype(str).str.casefold() == "pass"
+        ]
+        passed_credits = sum(
+            float(credits[course_code])
+            for course_code in passed.get("course_code", pd.Series(dtype=str))
+            if course_code in credits
+        )
+        if passed_credits < progress_config["graduation"][
+            "minimum_passed_credits_per_semester"
+        ]:
+            consecutive_low += 1
+            if consecutive_low >= 2:
+                return True
+        else:
+            consecutive_low = 0
+    return False
+
+
+def resolve_student_profile(student, config=None, *, student_id=None):
+    config = config or GENERATOR_CONFIG
+    student_id = student_id or student.get("student_id")
+    if student_id is None or pd.isna(student_id):
+        raise ValueError("student_id is required to resolve a student profile")
+    student_id = str(student_id)
+    profile = generate_student_profile(student_id, config)
+    for field in PROFILE_FIELDS:
+        value = student.get(field)
+        if pd.notna(value):
+            profile[field] = value
+    if pd.isna(student.get("academic_level")) and pd.notna(student.get("base_score")):
+        base_scores = config["academic"]["base_scores"]
+        profile["academic_level"] = min(
+            range(1, 6),
+            key=lambda level: abs(
+                float(student["base_score"]) - base_scores[level - 1]
+            ),
+        )
+    for field in (
+        "discipline",
+        "motivation",
+        "stress",
+        "social_activity",
+        "academic_level",
+        "math_level",
+        "english_level",
+    ):
+        value = int(profile[field])
+        if value < 1 or value > 5:
+            raise ValueError(f"{field} for student {student_id} must be between 1 and 5")
+        profile[field] = value
+    return profile
+
+
+def _normalized_trait(value):
+    return (float(value) - 3.0) / 2.0
+
+
+def course_mean_score(
+    student,
+    course_code,
+    catalog_difficulty,
+    config=None,
+    *,
+    student_id=None,
+):
+    config = config or GENERATOR_CONFIG
+    profile = resolve_student_profile(
+        student,
+        config,
+        student_id=student_id,
+    )
+    prefix = str(course_code)[:2].upper()
+    subject = (
+        "english_level"
+        if prefix == "LA"
+        else "math_level"
+        if prefix in {"MT", "MA", "PH", "CH"}
+        else None
+    )
+    ability_level = float(profile["academic_level"])
+    if subject:
+        ability_level += config["academic"]["subject_effect"] * (
+            profile[subject] - profile["academic_level"]
+        )
+    mean_score = _base_score_for_level(ability_level, config)
+    mean_score += sum(
+        weight * _normalized_trait(profile[trait])
+        for trait, weight in config["personality_weights"].items()
+    )
+
+    difficulty_config = config["difficulty"]
+    overrides = difficulty_config["course_overrides"]
+    if course_code in overrides:
+        difficulty_fraction = (
+            overrides[course_code] - difficulty_config["min_level"]
+        ) / (difficulty_config["max_level"] - difficulty_config["min_level"])
+    else:
+        catalog_value = float(catalog_difficulty)
+        if not math.isfinite(catalog_value):
+            raise ValueError(f"Invalid catalog difficulty for course {course_code}")
+        difficulty_fraction = (
+            catalog_value - difficulty_config["catalog_min"]
+        ) / (difficulty_config["catalog_max"] - difficulty_config["catalog_min"])
+    difficulty_fraction = float(np.clip(difficulty_fraction, 0.0, 1.0))
+
+    academic_strength = (profile["academic_level"] - 1) / 4.0
+    personality_strength = sum((
+        (profile["discipline"] - 1) / 4.0,
+        (profile["motivation"] - 1) / 4.0,
+        (5 - profile["stress"]) / 4.0,
+    )) / 3.0
+    overall_strength = (academic_strength + personality_strength) / 2.0
+    difficulty_effect = (
+        difficulty_fraction
+        * difficulty_config["max_penalty"]
+        * (1.0 - difficulty_config["resilience"] * overall_strength)
+    )
+    return mean_score - difficulty_effect
+
+
+def generate_observed_score(mean_score, rng, config=None, *, retaken=False):
+    config = config or GENERATOR_CONFIG
+    noise = config["noise"]
+    if rng.random() < noise["high_deviation_ratio"]:
+        deviation = abs(rng.normal(0, noise["high_sigma"]))
+        if rng.random() < noise["low_direction_ratio"]:
+            score = mean_score - deviation
+        else:
+            score = mean_score + deviation
+    else:
+        score = rng.normal(mean_score, noise["normal_sigma"])
+    if retaken:
+        score += config["score"]["retake_bonus"]
+    return float(np.clip(score, config["score"]["min"], config["score"]["max"]))
+
+
+def convert_score_to_grade(score, config=None):
+    config = config or GENERATOR_CONFIG
+    grade_scale = config["grade_scale"]
+    for index, grade in enumerate(grade_scale):
+        if grade["min"] <= score < grade["max"]:
+            return grade["letter"], float(grade["gpa4"])
+        if index == len(grade_scale) - 1 and score == grade["max"]:
+            return grade["letter"], float(grade["gpa4"])
+    raise ValueError(f"Score {score} is outside the configured grade scale")
+
+
+def semester_index(semester_code):
+    code = str(semester_code).upper()
+    if len(code) != 5 or not code.startswith("HK") or not code[2:].isdigit():
+        raise ValueError(f"Invalid semester code: {semester_code}")
+    year = int(code[2:4])
+    term = int(code[4])
+    if term not in (1, 2):
+        raise ValueError(f"Invalid semester term in {semester_code}")
+    return (year - 23) * 2 + term
+
+
+def score_course_components(
+    student,
+    course_code,
+    components,
+    catalog_difficulty,
+    rng,
+    config=None,
+    *,
+    retaken=False,
+    student_id=None,
+):
+    config = config or GENERATOR_CONFIG
+    mean_score = course_mean_score(
+        student,
+        course_code,
+        catalog_difficulty,
+        config,
+        student_id=student_id,
+    )
+    scores = {}
+    final_score = 0.0
+    for component, weight in components:
+        score = round(generate_observed_score(
+            mean_score,
+            rng,
+            config,
+            retaken=retaken,
+        ), 1)
+        scores[component] = score
+        final_score += score * weight
+    final_score = round(final_score, 1)
+    letter, gpa = convert_score_to_grade(final_score, config)
+    return scores, final_score, letter, gpa
+
+
+def add_gpa_summaries(result, history, credits, config=None):
+    config = config or GENERATOR_CONFIG
+    semester_gpas = {}
+    for student_id, attempts in result.groupby("student_id"):
+        weighted_points = 0.0
+        attempted_credits = 0.0
+        for attempt in attempts.to_dict("records"):
+            score = attempt.get("final_score")
+            if pd.isna(score):
+                continue
+            course_code = attempt["course_id"]
+            if course_code not in credits:
+                raise ValueError(f"Credits missing for course {course_code}")
+            course_credits = float(credits[course_code])
+            weighted_points += float(attempt["gpa_4"]) * course_credits
+            attempted_credits += course_credits
+        semester_gpas[student_id] = (
+            round(weighted_points / attempted_credits, 2)
+            if attempted_credits
+            else pd.NA
+        )
+
+    completed_courses = {}
+    history_rows = history.to_dict("records")
+    current_rows = result.to_dict("records")
+    for attempt in history_rows + current_rows:
+        score = attempt.get("final_score")
+        if pd.isna(score):
+            continue
+        course_code = attempt.get("course_code", attempt.get("course_id"))
+        student_id = attempt.get("student_id")
+        if course_code not in credits:
+            raise ValueError(f"Credits missing for course {course_code}")
+        letter, gpa = convert_score_to_grade(float(score), config)
+        if letter == "F":
+            continue
+        student_courses = completed_courses.setdefault(student_id, {})
+        student_courses[course_code] = (
+            gpa,
+            float(credits[course_code]),
+        )
+
+    final_gpas = {}
+    for student_id, student_courses in completed_courses.items():
+        total_credits = sum(credit for _, credit in student_courses.values())
+        final_gpas[student_id] = (
+            round(
+                sum(gpa * credit for gpa, credit in student_courses.values())
+                / total_credits,
+                2,
+            )
+            if total_credits > 0
+            else pd.NA
+        )
+
+    result["semester_gpa_4"] = result["student_id"].map(semester_gpas)
+    result["final_gpa_4"] = result["student_id"].map(final_gpas)
+    return result
 
 
 def load_course_data():
@@ -100,7 +862,7 @@ def calculate_eligibility(students, history, credits, prerequisites):
     eligibility = {student_id: [] for student_id in students["student_id"]}
     registered_credits = {student_id: 0 for student_id in eligibility}
 
-    k23 = students[students["student_id"].str.startswith("231")]
+    k23 = students[students["student_id"].str.startswith("23")]
     for student in k23.itertuples(index=False):
         student_id = student.student_id
         passed_courses = passed.get(student_id, set())
@@ -150,7 +912,7 @@ def calculate_eligibility(students, history, credits, prerequisites):
                 eligibility[student_id].append(code)
                 registered_credits[student_id] += credits[code]
 
-    k24 = students[students["student_id"].str.startswith("241")]
+    k24 = students[students["student_id"].str.startswith("24")]
     for student in k24.itertuples(index=False):
         failed_courses = failed.get(student.student_id, set())
         ordered_courses = [
@@ -183,8 +945,37 @@ def calculate_eligibility_for_schedule(
     optional_elective_groups=None,
     required_elective_credits=None,
     required_choice_groups=None,
+    *,
+    semester_code=None,
+    config=None,
 ):
     """Build one eligibility map for a semester's class and enrollment generators."""
+    config = config or GENERATOR_CONFIG
+    if semester_code is None:
+        raise ValueError("semester_code is required to evaluate student eligibility")
+    scheduled_courses = {
+        str(cohort)[:2]: courses for cohort, courses in scheduled_courses.items()
+    }
+    additional_course_groups = {
+        str(cohort)[:2]: groups
+        for cohort, groups in additional_course_groups.items()
+    }
+    required_elective_groups = {
+        str(cohort)[:2]: groups
+        for cohort, groups in (required_elective_groups or {}).items()
+    }
+    optional_elective_groups = {
+        str(cohort)[:2]: groups
+        for cohort, groups in (optional_elective_groups or {}).items()
+    }
+    required_elective_credits = {
+        str(cohort)[:2]: groups
+        for cohort, groups in (required_elective_credits or {}).items()
+    }
+    required_choice_groups = {
+        str(cohort)[:2]: groups
+        for cohort, groups in (required_choice_groups or {}).items()
+    }
     passed = (
         history[history["status"].astype(str).str.casefold() == "pass"]
         .groupby("student_id")["course_code"].apply(set).to_dict()
@@ -198,22 +989,80 @@ def calculate_eligibility_for_schedule(
         .groupby("course_code")["related_course_code"].apply(list).to_dict()
     )
     eligibility = {}
-    required_elective_groups = required_elective_groups or {}
-    optional_elective_groups = optional_elective_groups or {}
-    required_elective_credits = required_elective_credits or {}
-    required_choice_groups = required_choice_groups or {}
     for student in students.itertuples(index=False):
-        prefix = str(student.student_id)[:3]
+        student_id = student.student_id
+        dropout_semester_value = getattr(
+            student, "voluntary_dropout_semester", ""
+        )
+        dropout_semester = (
+            ""
+            if pd.isna(dropout_semester_value)
+            else str(dropout_semester_value)
+        )
+        if dropout_semester and semester_index(semester_code) > semester_index(
+            dropout_semester
+        ):
+            continue
+        if _has_two_consecutive_low_credit_semesters(
+            student_id, history, credits, semester_code, config
+        ):
+            continue
+
+        thesis_courses = set(
+            config["student_progress"]["graduation"]["thesis_course_codes"]
+        )
+        thesis_eligible = (
+            str(getattr(student, "english_pass", False)).casefold() == "true"
+            and ctxh_days_before_semester(student, semester_code)
+            >= config["student_progress"]["ctxh"]["minimum_for_thesis"]
+        )
+
+        def course_is_available(course_code):
+            return course_code not in thesis_courses or thesis_eligible
+
+        prefix = str(student.student_id)[:2]
         scheduled = scheduled_courses.get(prefix)
         if scheduled is None:
             continue
-        extras = additional_course_groups.get(prefix, [])
-        elective_groups = required_elective_groups.get(prefix, {})
-        optional_groups = optional_elective_groups.get(prefix, {})
-        credit_targets = required_elective_credits.get(prefix, {})
-        choice_groups = required_choice_groups.get(prefix, {})
         passed_courses = passed.get(student.student_id, set())
         failed_courses = failed.get(student.student_id, set())
+        thesis_pending = any(
+            code in thesis_courses and code not in passed_courses
+            for code in scheduled
+        )
+        if thesis_pending and not thesis_eligible:
+            empty_semester_probability = config["student_progress"][
+                "graduation"
+            ]["ineligible_thesis_empty_semester_probability"]
+            pause_rng = np.random.default_rng(
+                _stable_seed(
+                    student_id,
+                    config,
+                    f"empty-thesis-semester:{semester_code}",
+                )
+            )
+            if pause_rng.random() < empty_semester_probability:
+                eligibility[student.student_id] = []
+                continue
+        scheduled = [code for code in scheduled if course_is_available(code)]
+        extras = additional_course_groups.get(prefix, [])
+        extras = [code for code in extras if course_is_available(code)]
+        elective_groups = required_elective_groups.get(prefix, {})
+        elective_groups = {
+            name: [code for code in courses if course_is_available(code)]
+            for name, courses in elective_groups.items()
+        }
+        optional_groups = optional_elective_groups.get(prefix, {})
+        optional_groups = {
+            name: [code for code in courses if course_is_available(code)]
+            for name, courses in optional_groups.items()
+        }
+        credit_targets = required_elective_credits.get(prefix, {})
+        choice_groups = required_choice_groups.get(prefix, {})
+        choice_groups = {
+            name: [code for code in courses if course_is_available(code)]
+            for name, courses in choice_groups.items()
+        }
         selected = []
         registered_credits = 0
         chosen_courses = set()
@@ -237,6 +1086,7 @@ def calculate_eligibility_for_schedule(
         failed_to_retake = [
             code for code in sorted(failed_courses)
             if code in credits and code not in passed_courses
+            and course_is_available(code)
         ]
         choice_codes = list(chosen_courses)
         ordered = list(dict.fromkeys(

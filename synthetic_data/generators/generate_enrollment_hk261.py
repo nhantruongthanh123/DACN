@@ -9,9 +9,15 @@ ROOT_DIR = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT_DIR / "rules"))
 
 from academic_rules import (
+    add_gpa_summaries,
+    allocate_course_rosters,
     MAX_CREDITS,
     calculate_eligibility_for_schedule,
     load_history,
+    load_student_profiles,
+    score_course_components,
+    students_by_course_from_eligibility,
+    semester_index,
 )
 from curriculum_rules import (
     additional_courses,
@@ -39,7 +45,7 @@ K26_EXTRA_COURSES = [
 FREE = free_elective_courses("HK7")
 GROUP_C = group_c_elective_courses("HK7")
 
-students = pd.read_csv(ROOT_DIR / "data" / "people" / "student_base_score.csv", dtype={"student_id": str})
+students = load_student_profiles()
 classes = pd.read_csv(ROOT_DIR / "generated" / "classes" / "class_hk261.csv")
 assessment = pd.read_csv(ROOT_DIR / "data" / "catalog" / "assessment.csv")
 prerequisites = pd.read_csv(ROOT_DIR / "data" / "catalog" / "course_prerequisite.csv")
@@ -70,6 +76,7 @@ eligibility, failed = calculate_eligibility_for_schedule(
         "261": {"FREE": FREE, "GROUP_C": GROUP_C},
     },
     {"231": {"FREE": 3, "GROUP_C": 6}},
+    semester_code=SEMESTER,
 )
 
 components = {}
@@ -86,53 +93,62 @@ for item in assessment.itertuples(index=False):
 students_by_id = students.set_index("student_id")
 records = []
 enrollment_id = 1
-
-for course_code in classes["course_code"].drop_duplicates():
-    student_ids = [
-        student_id for student_id, selected in eligibility.items()
-        if course_code in selected
-    ]
-    class_ids = classes.loc[
-        classes["course_code"] == course_code, "class_id"
-    ].tolist()
-    if not student_ids or not class_ids:
-        continue
+students_by_course = students_by_course_from_eligibility(eligibility)
+for course_code, student_ids in students_by_course.items():
     seed = int(hashlib.sha256(
         f"{SEMESTER}:{course_code}:roster".encode()
     ).hexdigest()[:8], 16)
-    shuffled = np.random.default_rng(seed).permutation(student_ids)
-    for class_id, chunk in zip(class_ids, np.array_split(shuffled, len(class_ids))):
+    students_by_course[course_code] = np.random.default_rng(seed).permutation(
+        student_ids
+    ).tolist()
+course_rosters = allocate_course_rosters(students_by_course, classes)
+
+for course_code in classes["course_code"].drop_duplicates():
+    for class_id, chunk in course_rosters.get(course_code, []):
         for student_id in chunk:
             student = students_by_id.loc[student_id]
             retake = course_code in failed.get(student_id, set())
             rng = np.random.default_rng(int(hashlib.sha256(
                 f"{SEMESTER}:{student_id}:{course_code}:score".encode()
             ).hexdigest()[:8], 16))
-            boost = rng.uniform(1.0, 1.8) if retake else 0.0
             record = {
                 "enrollment_id": enrollment_id,
                 "student_id": student_id,
                 "class_id": class_id,
+                "course_id": course_code,
+                "semester": semester_index(SEMESTER),
+                "retaken": retake,
             }
-            for component, _weight in components.get(course_code, []):
-                score = np.clip(
-                    float(student["base_score"])
-                    + difficulties.get(course_code, 0.0)
-                    + rng.uniform(0, 0.3)
-                    + boost
-                    + rng.normal(0, 1.2),
-                    0,
-                    10,
-                )
-                record[component] = round(float(score), 1)
+            component_scores, _, _, _ = score_course_components(
+                student,
+                course_code,
+                components.get(course_code, []),
+                difficulties.get(course_code, 0.0),
+                rng,
+                retaken=retake,
+                student_id=student_id,
+            )
+            record.update(component_scores)
             record["final_score"] = pd.NA
+            record["letter_grade"] = pd.NA
+            record["gpa_4"] = pd.NA
+            record["passed"] = pd.NA
             record["status"] = pd.NA
             records.append(record)
             enrollment_id += 1
 
 result = pd.DataFrame(records)
-base = ["enrollment_id", "student_id", "class_id"]
-end = ["final_score", "status"]
+result = add_gpa_summaries(result, history, course_credits)
+base = ["enrollment_id", "student_id", "class_id", "course_id", "semester", "retaken"]
+end = [
+    "final_score",
+    "letter_grade",
+    "gpa_4",
+    "passed",
+    "semester_gpa_4",
+    "final_gpa_4",
+    "status",
+]
 components_in_result = [c for c in result.columns if c not in base + end]
 result = result[base + components_in_result + end]
 output = ROOT_DIR / "generated" / "enrollments" / "enrollment_hk261.csv"

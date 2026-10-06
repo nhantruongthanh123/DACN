@@ -48,9 +48,11 @@ tra cứu.
 | `course_code` | Mã môn học duy nhất, ví dụ `CO1005`; là khóa liên kết chính trong các rule. |
 | `course_name` | Tên môn học. |
 | `credits` | Số tín chỉ; dùng để giới hạn số tín chỉ đăng ký và tính tổng tín chỉ. |
-| `difficulty` | Hệ số điều chỉnh điểm mô phỏng. Generator cộng hệ số này vào `base_score`; giá trị cao hơn có xu hướng làm điểm cao hơn theo logic hiện tại. |
+| `difficulty` | Hệ số difficulty trên thang catalog được cấu hình. Giá trị cao hơn làm giảm điểm; có thể override riêng từng môn bằng `config/generator_config.json`. |
 
-`tools/update_course.py` có thể thêm/cập nhật cột `difficulty`.
+`tools/update_course.py` có thể thêm/cập nhật cột `difficulty`. Giá trị được
+chuẩn hóa theo `difficulty.catalog_min`/`catalog_max`; dùng
+`difficulty.course_overrides` để đặt trực tiếp mức 1–5 cho một môn.
 
 ### `assessment.csv`
 
@@ -172,19 +174,26 @@ Hồ sơ gốc của sinh viên.
 | `cohort` | Khóa học, ví dụ `K23`, `K24`. |
 | `major` | Ngành học. |
 
-### `student_base_score.csv`
+### `student_base_score.csv` (profile cũ)
 
-Phiên bản rút gọn dùng trực tiếp khi mô phỏng kết quả học tập. File được tạo
-bởi `tools/add_base_score.py` từ `student.csv`.
+File profile tương thích ngược. `tools/add_base_score.py` hiện ghi profile
+chính tại `generated/student_profile/student_profiles.csv`; các generator ưu
+tiên file mới và dùng file này làm fallback trước khi profile mới được tạo.
 
 | Cột | Kiểu/ý nghĩa |
 | --- | --- |
 | `student_id` | Mã sinh viên, dùng để liên kết với enrollment và lịch sử. |
 | `name` | Tên sinh viên, phục vụ nhận diện. |
-| `base_score` | Điểm năng lực nền trên thang 10; là thành phần chính của công thức sinh điểm. |
+| `family_income`, `financial_pressure`, `living_condition` | Profile background dạng categorical. |
+| `discipline`, `motivation`, `stress`, `social_activity` | Personality trait trên thang 1–5. |
+| `academic_level`, `math_level`, `english_level` | Academic/subject ability trên thang 1–5. |
+| `base_score` | Điểm năng lực nền trên thang 10; các rule đăng ký cũ vẫn dùng trường này. |
 
-Chạy lại `add_base_score.py` sẽ tạo lại giá trị ngẫu nhiên và làm thay đổi
-điểm mô phỏng của các kỳ chạy sau.
+`academic_rules.py` tạo profile ổn định theo `student_id` và `seed`, tính điểm
+môn từ academic/personality/subject effect, difficulty đã điều chỉnh theo profile
+và noise. Nếu file profile chưa có các trường cần thiết, rule vẫn tạo giá trị
+fallback ổn định theo mã sinh viên. Chạy lại `add_base_score.py` sau khi đổi
+config để tạo lại profile.
 
 ### `lecture.csv`
 

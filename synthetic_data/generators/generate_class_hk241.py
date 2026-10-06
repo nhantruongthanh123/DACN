@@ -1,4 +1,3 @@
-import math
 import sys
 from pathlib import Path
 
@@ -8,10 +7,11 @@ ROOT_DIR = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT_DIR / "rules"))
 
 from academic_rules import (
-    DATA_DIR,
+    balanced_class_sizes,
     get_department,
     load_history,
     calculate_eligibility_for_schedule,
+    load_student_profiles,
 )
 from curriculum_rules import (
     additional_courses,
@@ -30,8 +30,10 @@ COURSE_ORDER = list(dict.fromkeys(
     K23_COURSES + K23_EXTRA_COURSES + K24_COURSES
 ))
 
-students = pd.read_csv(DATA_DIR / "student_base_score.csv", dtype={"student_id": str})
-lecturers = pd.read_csv(DATA_DIR / "lecturer_for_class.csv")
+students = load_student_profiles()
+lecturers = pd.read_csv(
+    ROOT_DIR / "data" / "people" / "lecturer_for_class.csv"
+)
 history = load_history(("hk231", "hk232"))
 prerequisites = pd.read_csv(ROOT_DIR / "data" / "catalog" / "course_prerequisite.csv")
 course_names, course_credits, _ = course_catalog()
@@ -43,6 +45,7 @@ eligibility, _ = calculate_eligibility_for_schedule(
     prerequisites,
     {"231": K23_COURSES, "241": K24_COURSES},
     {"231": K23_EXTRA_COURSES},
+    semester_code=SEMESTER,
 )
 
 course_codes = list(dict.fromkeys(
@@ -60,12 +63,11 @@ for course_code in course_codes:
     demand = sum(course_code in selected for selected in eligibility.values())
     if not demand:
         continue
-    size_limit = 40 if course_code.startswith(("LA", "PH")) else 120
     lecturer_ids = lecturers.loc[
         lecturers["departments"] == get_department(course_code),
         "lecturer_id",
     ].tolist() or ["UNKNOWN_ID"]
-    for index in range(1, math.ceil(demand / size_limit) + 1):
+    for index, _ in enumerate(balanced_class_sizes(demand), start=1):
         group = f"L{index:02d}"
         lecturer_id = lecturer_ids[(index - 1) % len(lecturer_ids)]
         class_data.append(

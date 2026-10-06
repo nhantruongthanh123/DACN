@@ -11,7 +11,10 @@ CLASSES_DIR = ROOT_DIR / "generated" / "classes"
 ENROLLMENTS_DIR = ROOT_DIR / "generated" / "enrollments"
 
 
-INPUT_FILE = PEOPLE_DIR / "student_base_score.csv"
+PROFILE_FILE = ROOT_DIR / "generated" / "student_profile" / "student_profiles.csv"
+INPUT_FILE = (
+    PROFILE_FILE if PROFILE_FILE.exists() else PEOPLE_DIR / "student_base_score.csv"
+)
 LECTURE_FILE = PEOPLE_DIR / "lecturer_for_class.csv"
 ENROLLMENT_FILE_HK231 = ENROLLMENTS_DIR / "enrollment_hk231.csv"
 ENROLLMENT_FILE_HK232 = ENROLLMENTS_DIR / "enrollment_hk232.csv"
@@ -26,7 +29,7 @@ def summarize_required_courses(student_id, print_report=True):
     """
     data_dir = ROOT_DIR
     student_id = str(student_id).strip()
-    students_file = PEOPLE_DIR / "student_base_score.csv"
+    students_file = INPUT_FILE
     students = pd.read_csv(students_file, dtype={"student_id": str})
     if student_id not in students["student_id"].astype(str).str.strip().values:
         raise ValueError(f"Không tìm thấy sinh viên: {student_id}")
@@ -317,7 +320,7 @@ def get_class_roster(semester, class_id):
     # 1. Xác định tên file dựa theo học kỳ
     class_file = CLASSES_DIR / f"class_{semester.lower()}.csv"
     enrollment_file = ENROLLMENTS_DIR / f"enrollment_{semester.lower()}.csv"
-    student_file = PEOPLE_DIR / "student_base_score.csv"
+    student_file = INPUT_FILE
     
     # Kiểm tra sự tồn tại của các file dữ liệu
     for f in [class_file, enrollment_file, student_file]:

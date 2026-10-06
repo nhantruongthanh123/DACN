@@ -1,4 +1,3 @@
-import math
 import sys
 from pathlib import Path
 
@@ -7,7 +6,12 @@ import pandas as pd
 ROOT_DIR = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT_DIR / "rules"))
 
-from academic_rules import calculate_eligibility_for_schedule, load_history
+from academic_rules import (
+    balanced_class_sizes,
+    calculate_eligibility_for_schedule,
+    load_history,
+    load_student_profiles,
+)
 from curriculum_rules import (
     MAX_CREDITS,
     additional_courses,
@@ -45,10 +49,7 @@ COURSE_ORDER = list(dict.fromkeys(
     + K25_EXTRA_COURSES
 ))
 
-students = pd.read_csv(
-    ROOT_DIR / "data" / "people" / "student_base_score.csv",
-    dtype={"student_id": str},
-)
+students = load_student_profiles()
 lecturers = pd.read_csv(ROOT_DIR / "data" / "people" / "lecturer_for_class.csv")
 history = load_history(("hk231", "hk232", "hk241", "hk242"))
 prerequisites = pd.read_csv(ROOT_DIR / "data" / "catalog" / "course_prerequisite.csv")
@@ -92,6 +93,7 @@ eligibility, _ = calculate_eligibility_for_schedule(
             "GROUP_C": group_c_elective_courses("HK5"),
         },
     },
+    semester_code=SEMESTER,
 )
 COURSE_ORDER = list(dict.fromkeys(
     COURSE_ORDER
@@ -111,14 +113,13 @@ for course_code in COURSE_ORDER:
     if not demand:
         continue
 
-    size_limit = 40 if course_code.startswith(("LA", "PH")) else 120
     department = get_department(course_code)
     lecturer_ids = lecturers.loc[
         lecturers["departments"] == department,
         "lecturer_id",
     ].tolist() or ["UNKNOWN_ID"]
 
-    for index in range(1, math.ceil(demand / size_limit) + 1):
+    for index, _ in enumerate(balanced_class_sizes(demand), start=1):
         class_group = f"L{index:02d}"
         lecturer_id = lecturer_ids[(index - 1) % len(lecturer_ids)]
         class_data.append(
@@ -144,7 +145,7 @@ pd.DataFrame(class_data).to_csv(
 )
 
 print(f"Created {output.name}: {len(class_data)} classes")
-print(f"K23 students: {sum(s.startswith('231') for s in eligibility)}")
-print(f"K24 students: {sum(s.startswith('241') for s in eligibility)}")
-print(f"K25 students: {sum(s.startswith('251') for s in eligibility)}")
+print(f"K23 students: {sum(s.startswith('23') for s in eligibility)}")
+print(f"K24 students: {sum(s.startswith('24') for s in eligibility)}")
+print(f"K25 students: {sum(s.startswith('25') for s in eligibility)}")
 print(f"Credit limit per student: {MAX_CREDITS}")

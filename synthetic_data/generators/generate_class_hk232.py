@@ -1,4 +1,3 @@
-import math
 import sys
 from pathlib import Path
 
@@ -6,9 +5,13 @@ import pandas as pd
 
 ROOT_DIR = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT_DIR / "rules"))
-from academic_rules import calculate_eligibility_for_schedule, load_history
+from academic_rules import (
+    balanced_class_sizes,
+    calculate_eligibility_for_schedule,
+    load_history,
+    load_student_profiles,
+)
 from curriculum_rules import (
-    DATA_DIR,
     additional_courses,
     course_catalog,
     curriculum_courses,
@@ -18,13 +21,10 @@ from curriculum_rules import (
 
 SEMESTER = "HK232"
 CURRICULUM_SEMESTER = "HK2"
-DEFAULT_CLASS_SIZE = 120
-SMALL_CLASS_SIZE = 40
-
-students = pd.read_csv(ROOT_DIR / "data" / "people" / "student_base_score.csv", dtype={"student_id": str})
+students = load_student_profiles()
 lecturers = pd.read_csv(ROOT_DIR / "data" / "people" / "lecturer_for_class.csv")
 student_ids = students.loc[
-    students["student_id"].str.startswith("231"), "student_id"
+    students["student_id"].str.startswith("23"), "student_id"
 ].tolist()
 course_names, course_credits, _ = course_catalog()
 standard_courses = curriculum_courses(CURRICULUM_SEMESTER)
@@ -41,6 +41,7 @@ eligibility, _ = calculate_eligibility_for_schedule(
     prerequisites,
     {"231": standard_courses},
     {"231": extra_courses},
+    semester_code=SEMESTER,
 )
 
 id_to_name = dict(zip(lecturers["lecturer_id"], lecturers["lecturer_name"]))
@@ -54,15 +55,10 @@ for course_code in course_codes:
     demand = sum(course_code in selected for selected in eligibility.values())
     if not demand:
         continue
-    size_limit = (
-        SMALL_CLASS_SIZE
-        if course_code.startswith(("LA", "PH"))
-        else DEFAULT_CLASS_SIZE
-    )
     lecturer_ids = lecturers.loc[
         lecturers["departments"] == get_department(course_code), "lecturer_id"
     ].tolist() or ["UNKNOWN"]
-    for index in range(1, math.ceil(demand / size_limit) + 1):
+    for index, _ in enumerate(balanced_class_sizes(demand), start=1):
         group = f"L{index:02d}"
         lecturer_id = lecturer_ids[(index - 1) % len(lecturer_ids)]
         class_data.append(
