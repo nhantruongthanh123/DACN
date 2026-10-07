@@ -17,6 +17,8 @@ from curriculum_rules import (
     course_catalog,
     curriculum_courses,
     get_department as catalog_department,
+    load_electives,
+    load_group_c_electives,
 )
 
 
@@ -30,6 +32,38 @@ OPTIONAL_ENROLLMENT_THRESHOLD = 15
 OPTIONAL_16_CREDIT_PROBABILITY = 0.35
 ACCELERATION_BASE_SCORE = 8.0
 ACCELERATION_PROBABILITY = 0.35
+FREE_CREDIT_LIMIT = 9
+GROUP_C_CREDIT_LIMIT = 15
+
+_FREE_COURSE_CODES = None
+_GROUP_C_COURSE_CODES = None
+
+
+def get_free_course_codes():
+    global _FREE_COURSE_CODES
+    if _FREE_COURSE_CODES is None:
+        try:
+            df = load_electives()
+            _FREE_COURSE_CODES = set(
+                df[df["elective_group"] == "FREE"]["course_code"].dropna()
+            )
+        except Exception:
+            _FREE_COURSE_CODES = set()
+    return _FREE_COURSE_CODES
+
+
+def get_group_c_course_codes():
+    global _GROUP_C_COURSE_CODES
+    if _GROUP_C_COURSE_CODES is None:
+        try:
+            df = load_group_c_electives()
+            _GROUP_C_COURSE_CODES = set(
+                df[df["elective_group"] == "GROUP_C"]["course_code"].dropna()
+            )
+        except Exception:
+            _GROUP_C_COURSE_CODES = set()
+    return _GROUP_C_COURSE_CODES
+
 SEMESTER = "HK141"
 K13_COURSES = curriculum_courses("HK3")
 K13_EXTRA_COURSES = [
@@ -884,15 +918,67 @@ def load_history(semesters=("hk231", "hk232")):
     return pd.concat(history, ignore_index=True)
 
 
-def can_skip_la1003(student_id, base_score):
+ENGLISH_COURSE_CODES = ("LA1003", "LA1005", "LA1007", "LA1009")
+
+
+def get_exempted_english_courses(student, config=None):
+    """Return the set of English courses exempted for the student.
+
+    - If english_pass is True, student is exempt from all 4 courses (LA1003-LA1009).
+    - If english_pass is False, student takes the English placement test upon entry.
+      Based on their english_level and test score, they can skip early courses:
+        * Placement 1: Skip none (learn LA1003, LA1005, LA1007, LA1009)
+        * Placement 2: Skip LA1003 (learn LA1005, LA1007, LA1009)
+        * Placement 3: Skip LA1003, LA1005 (learn LA1007, LA1009)
+        * Placement 4+: Skip LA1003, LA1005, LA1007 (learn LA1009)
+    """
+    config = config or GENERATOR_CONFIG
+    english_pass = (
+        str(_student_value(student, "english_pass", False)).casefold() == "true"
+    )
+    if english_pass:
+        return set(ENGLISH_COURSE_CODES)
+
+    student_id = str(_student_value(student, "student_id", ""))
+    english_level = int(_student_value(student, "english_level", 3))
+
+    seed = _stable_seed(student_id, config, "english_placement_test")
+    rng = np.random.default_rng(seed)
+    val = rng.random()
+
+    if english_level <= 1:
+        skip_count = 1 if val < 0.20 else 0
+    elif english_level == 2:
+        skip_count = 0 if val < 0.20 else (2 if val > 0.80 else 1)
+    elif english_level == 3:
+        skip_count = 1 if val < 0.10 else (3 if val > 0.80 else 2)
+    elif english_level == 4:
+        skip_count = 2 if val < 0.10 else 3
+    else:
+        skip_count = 3
+
+    mapping = {
+        0: set(),
+        1: {"LA1003"},
+        2: {"LA1003", "LA1005"},
+        3: {"LA1003", "LA1005", "LA1007"},
+    }
+    return mapping[skip_count]
+
+
+def can_skip_la1003(student_id, base_score=None, *, student=None, config=None):
+    target = student if student is not None else student_id
+    if hasattr(target, "get") or hasattr(target, "student_id") or isinstance(target, dict):
+        return "LA1003" in get_exempted_english_courses(target, config)
     digest = hashlib.sha256(str(student_id).encode("utf-8")).hexdigest()
     random_value = int(digest[:8], 16) / 0xFFFFFFFF
-    if base_score >= 8.0:
-        return True
-    if base_score >= 7.0:
-        return random_value < 0.70
-    if base_score >= 5.0:
-        return random_value < 0.15
+    if base_score is not None:
+        if base_score >= 8.0:
+            return True
+        if base_score >= 7.0:
+            return random_value < 0.70
+        if base_score >= 5.0:
+            return random_value < 0.15
     return False
 
 
@@ -1098,8 +1184,11 @@ def calculate_eligibility_for_schedule(
             and ctxh_days_before_semester(student, semester_code)
             >= config["student_progress"]["ctxh"]["minimum_for_thesis"]
         )
+        exempted_english = get_exempted_english_courses(student, config)
 
         def course_is_available(course_code):
+            if course_code in exempted_english:
+                return False
             return course_code not in thesis_courses or thesis_eligible
 
         prefix = str(student.student_id)[:2]
@@ -1154,7 +1243,7 @@ def calculate_eligibility_for_schedule(
                 if code in credits
                 and code not in passed_courses
                 and all(
-                    prerequisite in passed_courses
+                    prerequisite in passed_courses or prerequisite in exempted_english
                     for prerequisite in tq_rules.get(code, [])
                 )
             ]
@@ -1184,14 +1273,29 @@ def calculate_eligibility_for_schedule(
             if code in passed_courses or registered_credits + credits[code] > MAX_CREDITS:
                 continue
             if code not in failed_courses and not all(
-                prerequisite in passed_courses
+                prerequisite in passed_courses or prerequisite in exempted_english
                 for prerequisite in tq_rules.get(code, [])
             ):
                 continue
             selected.append(code)
             registered_credits += credits[code]
+        free_codes = (
+            get_free_course_codes()
+            | set(elective_groups.get("FREE", []))
+            | set(optional_groups.get("FREE", []))
+        )
+        group_c_codes = (
+            get_group_c_course_codes()
+            | set(elective_groups.get("GROUP_C", []))
+            | set(optional_groups.get("GROUP_C", []))
+        )
         for group_name, target in credit_targets.items():
             candidates = elective_groups.get(group_name, [])
+            current_all = passed_courses | set(selected)
+            if group_name == "FREE" and sum(credits.get(code, 0) for code in current_all if code in free_codes) >= FREE_CREDIT_LIMIT:
+                continue
+            if group_name == "GROUP_C" and sum(credits.get(code, 0) for code in current_all if code in group_c_codes) >= GROUP_C_CREDIT_LIMIT:
+                continue
             completed = sum(
                 credits[code]
                 for code in passed_courses | set(selected)
@@ -1202,8 +1306,12 @@ def calculate_eligibility_for_schedule(
                     break
                 if code in passed_courses or code in selected:
                     continue
+                if group_name == "FREE" and sum(credits.get(c, 0) for c in (passed_courses | set(selected)) if c in get_free_course_codes()) >= FREE_CREDIT_LIMIT:
+                    break
+                if group_name == "GROUP_C" and sum(credits.get(c, 0) for c in (passed_courses | set(selected)) if c in get_group_c_course_codes()) >= GROUP_C_CREDIT_LIMIT:
+                    break
                 if not all(
-                    prerequisite in passed_courses
+                    prerequisite in passed_courses or prerequisite in exempted_english
                     for prerequisite in tq_rules.get(code, [])
                 ):
                     continue
@@ -1272,7 +1380,7 @@ def calculate_eligibility_for_schedule(
                     if code not in passed_courses
                     and code not in selected
                     and all(
-                        prerequisite in passed_courses
+                        prerequisite in passed_courses or prerequisite in exempted_english
                         for prerequisite in tq_rules.get(code, [])
                     )
                     and registered_credits + credits[code] <= MAX_CREDITS
@@ -1314,13 +1422,22 @@ def calculate_eligibility_for_schedule(
                     or peer_round < max_peer_courses
                 )
             ):
+                current_all = passed_courses | set(selected)
+                completed_free = sum(
+                    credits.get(c, 0) for c in current_all if c in free_codes
+                )
+                completed_group_c = sum(
+                    credits.get(c, 0) for c in current_all if c in group_c_codes
+                )
                 available = [
                     (source_group, code)
                     for source_group, code in peer_stage
                     if code not in passed_courses
                     and code not in selected
+                    and not (source_group == "FREE" and completed_free >= FREE_CREDIT_LIMIT)
+                    and not (source_group == "GROUP_C" and completed_group_c >= GROUP_C_CREDIT_LIMIT)
                     and all(
-                        prerequisite in passed_courses
+                        prerequisite in passed_courses or prerequisite in exempted_english
                         for prerequisite in tq_rules.get(code, [])
                     )
                     and registered_credits + credits[code] <= optional_credit_limit
@@ -1339,7 +1456,6 @@ def calculate_eligibility_for_schedule(
                 peer_round += 1
         if (
             can_fill_gap
-            and acceleration
             and registered_credits < TUITION_BASELINE_CREDITS
         ):
             for code in extras:
@@ -1348,7 +1464,7 @@ def calculate_eligibility_for_schedule(
                 if code in passed_courses or code in selected:
                     continue
                 if not all(
-                    prerequisite in passed_courses
+                    prerequisite in passed_courses or prerequisite in exempted_english
                     for prerequisite in tq_rules.get(code, [])
                 ):
                     continue

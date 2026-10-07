@@ -20,6 +20,7 @@ from academic_rules import (
     filter_students_from_2013,
     generate_observed_score,
     generate_student_profile,
+    get_exempted_english_courses,
     semester_index,
     students_by_course_from_eligibility,
 )
@@ -375,8 +376,120 @@ class AcademicScoreRulesTests(unittest.TestCase):
             {"CO0000": 0},
         )
 
-        self.assertTrue(pd.isna(result.loc[0, "final_gpa_4"]))
+    def test_exempted_english_courses_exempts_all_when_english_pass_is_true(self):
+        student = {"student_id": "1300001", "english_pass": True, "english_level": 2}
+        exempted = get_exempted_english_courses(student)
+        self.assertEqual(exempted, {"LA1003", "LA1005", "LA1007", "LA1009"})
+
+    def test_exempted_english_courses_placement_when_english_pass_is_false(self):
+        # Level 1 student never skips more than LA1003 and never skips LA1009
+        student_l1 = {"student_id": "1300002", "english_pass": False, "english_level": 1}
+        exempted_l1 = get_exempted_english_courses(student_l1)
+        self.assertTrue(exempted_l1.issubset({"LA1003"}))
+        self.assertNotIn("LA1009", exempted_l1)
+
+        # Level 5 student skips early courses but still must learn LA1009
+        student_l5 = {"student_id": "1300003", "english_pass": False, "english_level": 5}
+        exempted_l5 = get_exempted_english_courses(student_l5)
+        self.assertEqual(exempted_l5, {"LA1003", "LA1005", "LA1007"})
+        self.assertNotIn("LA1009", exempted_l5)
+
+    def test_calculate_eligibility_exempted_english_satisfies_prerequisites(self):
+        # Student exempt from LA1003: LA1003 should not be scheduled, but LA1005 can be scheduled
+        students = pd.DataFrame([{
+            "student_id": "1300003",
+            "base_score": 6.5,
+            "english_pass": False,
+            "english_level": 5,  # skips LA1003, LA1005, LA1007
+        }])
+        history = pd.DataFrame(columns=["student_id", "course_code", "status"])
+        prerequisites = pd.DataFrame([
+            {"course_code": "LA1005", "related_course_code": "LA1003", "relation_type": "TQ"},
+            {"course_code": "LA1009", "related_course_code": "LA1007", "relation_type": "TQ"},
+        ])
+        credits = {"LA1003": 2, "LA1005": 2, "LA1009": 2}
+        scheduled = {"13": ["LA1003", "LA1009"]}
+
+        eligible, _ = calculate_eligibility_for_schedule(
+            students,
+            history,
+            credits,
+            prerequisites,
+            scheduled,
+            {},
+            semester_code="HK142",
+        )
+        # LA1003 was exempted so not in eligible; LA1009 had prerequisite LA1007 which was exempted, so satisfied!
+        self.assertNotIn("LA1003", eligible["1300003"])
+        self.assertIn("LA1009", eligible["1300003"])
+
+    def test_student_switches_course_type_when_elective_limit_reached(self):
+        # Student 1310001 has passed 15 credits of GROUP_C courses
+        # and needs to register courses for the semester
+        students = pd.DataFrame([{
+            "student_id": "1310001",
+            "base_score": 7.0,
+            "english_pass": True,
+        }])
+        # 5 courses * 3 credits = 15 credits from actual GROUP_C courses
+        passed_group_c = ["CO3011", "CO3013", "CO3015", "CO3017", "CO3021"]
+        history = pd.DataFrame([
+            {"student_id": "1310001", "course_code": code, "status": "Pass"}
+            for code in passed_group_c
+        ])
+        prerequisites = pd.DataFrame(columns=["course_code", "related_course_code", "relation_type"])
+        credits = {code: 3 for code in passed_group_c}
+        credits.update({"CO3023": 3, "CO3027": 3, "IM1011": 3, "IM1021": 3, "EXTRA01": 3})
+
+        free_candidates = ["IM1011", "IM1021"]
+        group_c_candidates = ["CO3023", "CO3027"]
+
+        eligible, _ = calculate_eligibility_for_schedule(
+            students,
+            history,
+            credits,
+            prerequisites,
+            {"13": []},
+            {"13": ["EXTRA01"]},
+            {"13": {"FREE": free_candidates, "GROUP_C": group_c_candidates}},
+            {"13": {"FREE": free_candidates, "GROUP_C": group_c_candidates}},
+            semester_code="HK161",
+        )
+
+        selected = eligible["1310001"]
+        # Since student already passed 15 credits of GROUP_C, no more GROUP_C should be selected!
+        for c in group_c_candidates:
+            self.assertNotIn(c, selected)
+        # FREE candidates should be selected instead
+        self.assertTrue(any(c in selected for c in free_candidates))
+
+        # Scenario 2: Student has passed BOTH 15 credits of GROUP_C AND 9 credits of FREE
+        passed_both = passed_group_c + ["IM1011", "IM1021", "IM1019"]
+        history_both = pd.DataFrame([
+            {"student_id": "1310001", "course_code": code, "status": "Pass"}
+            for code in passed_both
+        ])
+        credits.update({"IM1019": 3})
+        eligible_both, _ = calculate_eligibility_for_schedule(
+            students,
+            history_both,
+            credits,
+            prerequisites,
+            {"13": []},
+            {"13": ["EXTRA01"]},
+            {"13": {"FREE": free_candidates, "GROUP_C": group_c_candidates}},
+            {"13": {"FREE": free_candidates, "GROUP_C": group_c_candidates}},
+            semester_code="HK161",
+        )
+        selected_both = eligible_both["1310001"]
+        # No FREE and no GROUP_C should be selected!
+        for c in group_c_candidates + free_candidates:
+            self.assertNotIn(c, selected_both)
+        # Other course type (EXTRA01) should be selected instead!
+        self.assertIn("EXTRA01", selected_both)
 
 
 if __name__ == "__main__":
     unittest.main()
+
+

@@ -9,7 +9,7 @@ ROOT_DIR = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT_DIR / "rules"))
 from academic_rules import (
     balanced_class_sizes,
-    can_skip_la1003,
+    get_exempted_english_courses,
     load_student_profiles,
 )
 from curriculum_rules import course_catalog, curriculum_courses, get_department
@@ -39,7 +39,7 @@ for course_code in course_codes:
     ].tolist() or ["UNKNOWN"]
     if course_code == "LA1003":
         course_demand = sum(
-            not can_skip_la1003(student.student_id, student.base_score)
+            "LA1003" not in get_exempted_english_courses(student)
             for student in students.loc[
                 students["student_id"].str.startswith("13")
             ].itertuples(index=False)

@@ -10,7 +10,7 @@ sys.path.insert(0, str(ROOT_DIR / "rules"))
 from academic_rules import (
     add_gpa_summaries,
     allocate_course_rosters,
-    can_skip_la1003,
+    get_exempted_english_courses,
     load_student_profiles,
     score_course_components,
     semester_index,
@@ -66,7 +66,7 @@ students_by_course = {}
 for course in df_class['course_code'].unique():
     if course == 'LA1003':
         mask_take_english = df_k13.apply(
-            lambda row: not can_skip_la1003(row['student_id'], row['base_score']),
+            lambda row: "LA1003" not in get_exempted_english_courses(row),
             axis=1,
         )
         students_for_course = df_k13[mask_take_english].copy()

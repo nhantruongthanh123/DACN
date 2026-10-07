@@ -14,6 +14,7 @@ from academic_rules import (  # noqa: E402
     GENERATOR_CONFIG,
     PROFILE_OUTPUT_FILE,
     academic_suspension_semesters,
+    get_exempted_english_courses,
     semester_index,
 )
 
@@ -145,7 +146,9 @@ def _profile_graduation_state(
     )
     graduation_config = GENERATOR_CONFIG["student_progress"]["graduation"]
     english_pass = str(profile.get("english_pass", False)).casefold() == "true"
-    missing_courses = required_courses - passed_courses
+    exempted_english = get_exempted_english_courses(profile, GENERATOR_CONFIG)
+    effective_required_courses = required_courses - exempted_english
+    missing_courses = effective_required_courses - passed_courses
     graduation_ready = (
         not missing_courses
         and english_pass
@@ -168,7 +171,7 @@ def _profile_graduation_state(
             term_ctxh_days = _ctxh_days_for_semester(progress, semester)
             term_passed = set(completed_through_term["course_code"])
             if (
-                required_courses.issubset(term_passed)
+                effective_required_courses.issubset(term_passed)
                 and term_ctxh_days
                 >= GENERATOR_CONFIG["student_progress"]["ctxh"][
                     "minimum_for_graduation"

@@ -1,7 +1,5 @@
 ﻿class_id,course_code,course_name,semester,class_group,lecturer_id,lecturer_name
 HK131_LA1003_L01,LA1003,Anh văn 1,HK131,L01,1316584,Lý Hoàng Duy
-HK131_LA1003_L02,LA1003,Anh văn 1,HK131,L02,1364098,Bùi Anh Hiếu
-HK131_LA1003_L03,LA1003,Anh văn 1,HK131,L03,1372017,Dương Hữu Bảo
 HK131_PE1003_L01,PE1003,Giáo dục thể chất 1,HK131,L01,1300746,Ngô Quốc An
 HK131_PE1003_L02,PE1003,Giáo dục thể chất 1,HK131,L02,1324503,Phạm Ngọc Nam
 HK131_PE1003_L03,PE1003,Giáo dục thể chất 1,HK131,L03,1332422,Hồ Khánh Trinh

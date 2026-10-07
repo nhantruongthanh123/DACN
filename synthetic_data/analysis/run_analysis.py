@@ -10,7 +10,9 @@ from analysis_helpers import (
     get_available_semesters,
     get_sample_student_id,
     get_class_roster,
+    summarize_cohort_results,
     summarize_required_courses,
+    view_cohort_status,
     view_ctxh_distribution,
     view_fail_result,
     view_student_results,
@@ -47,6 +49,10 @@ def run_demo(student_id=None):
     print(f"\n[DEMO] Phân tích phân phối số ngày CTXH của khóa {target_cohort}:")
     view_ctxh_distribution(target_cohort, print_report=True)
 
+    # 5. Tổng kết kết quả học vụ của khóa (tốt nghiệp, thôi học, tiếp tục học)
+    print(f"\n[DEMO] Tổng kết kết quả học vụ của khóa {target_cohort}:")
+    summarize_cohort_results(target_cohort, print_report=True)
+
 
 def main():
     parser = argparse.ArgumentParser(
@@ -59,6 +65,7 @@ Ví dụ sử dụng:
   python run_analysis.py --roster HK162 HK162_CO4337_L01
   python run_analysis.py --fails HK162
   python run_analysis.py --ctxh K13
+  python run_analysis.py --summary K13
   python run_analysis.py --semesters
   python run_analysis.py --demo 1309714
   python run_analysis.py (chạy demo mặc định)
@@ -95,10 +102,17 @@ Ví dụ sử dụng:
     parser.add_argument(
         "-k",
         "--ctxh",
-        "--cohort",
         dest="ctxh_cohort",
         metavar="COHORT",
         help="Xem phân phối số ngày CTXH của một khóa sinh viên (VD: K13, K14)",
+    )
+    parser.add_argument(
+        "-u",
+        "--summary",
+        "--cohort-status",
+        dest="summary_cohort",
+        metavar="COHORT",
+        help="Tổng kết kết quả học vụ của một khóa (tốt nghiệp, thôi học, tiếp tục học)",
     )
     parser.add_argument(
         "-s",
@@ -112,7 +126,7 @@ Ví dụ sử dụng:
         nargs="?",
         const="",
         metavar="STUDENT_ID",
-        help="Chạy báo cáo minh họa tổng hợp (bảng điểm, môn còn thiếu, phân phối điểm rớt, CTXH)",
+        help="Chạy báo cáo minh họa tổng hợp (bảng điểm, môn còn thiếu, phân phối điểm rớt, CTXH, tổng kết khóa)",
     )
 
     args = parser.parse_args()
@@ -151,6 +165,9 @@ Ví dụ sử dụng:
 
     if args.ctxh_cohort:
         view_ctxh_distribution(args.ctxh_cohort)
+
+    if args.summary_cohort:
+        summarize_cohort_results(args.summary_cohort)
 
     if args.demo is not None:
         target = args.demo if args.demo else None

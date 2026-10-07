@@ -1,17 +1,22 @@
 import json
 import os
+import sys
 from pathlib import Path
 import pandas as pd
 
 
 ROOT_DIR = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT_DIR / "rules"))
+from academic_rules import get_exempted_english_courses
 CATALOG_DIR = ROOT_DIR / "data" / "catalog"
 PEOPLE_DIR = ROOT_DIR / "data" / "people"
 CLASSES_DIR = ROOT_DIR / "generated" / "classes"
 ENROLLMENTS_DIR = ROOT_DIR / "generated" / "enrollments"
+METRICS_DIR = ROOT_DIR / "generated" / "metrics"
 
 PROFILE_FILE = ROOT_DIR / "generated" / "student_profile" / "student_profiles.csv"
 STUDENT_FILE = PEOPLE_DIR / "student.csv"
+STUDENT_METRICS_FILE = METRICS_DIR / "student_metrics.csv"
 INPUT_FILE = (
     PROFILE_FILE if PROFILE_FILE.exists() else PEOPLE_DIR / "student_base_score.csv"
 )
@@ -56,9 +61,12 @@ def summarize_required_courses(student_id, print_report=True):
         raise FileNotFoundError(f"Không tìm thấy file hồ sơ sinh viên: {INPUT_FILE}")
 
     students = pd.read_csv(INPUT_FILE, dtype={"student_id": str})
-    student_ids = set(students["student_id"].astype(str).str.strip().values)
-    if student_id not in student_ids:
+    student_records = students[students["student_id"] == student_id]
+    if student_records.empty:
         raise ValueError(f"Không tìm thấy sinh viên: {student_id}")
+    student_row = student_records.iloc[0]
+
+    exempted_english = get_exempted_english_courses(student_row)
 
     passed = set()
     failed = set()
@@ -98,7 +106,7 @@ def summarize_required_courses(student_id, print_report=True):
     rows = []
     for item in curriculum.itertuples(index=False):
         code = str(item.course_code).strip() if pd.notna(item.course_code) else ""
-        if not code or code in passed:
+        if not code or code in passed or code in exempted_english:
             continue
         credits_val = (
             catalog_map.loc[code, "credits"]
@@ -164,11 +172,56 @@ def summarize_required_courses(student_id, print_report=True):
         })
     electives = pd.DataFrame(elective_rows)
 
-    result = {"courses": courses, "electives": electives}
+    graduation_info = {}
+    cohort_str = f"K{student_id[:2]}" if len(student_id) >= 2 and student_id[:2].isdigit() else ""
+    cohort_metrics = METRICS_DIR / cohort_str / "student_metrics.csv" if cohort_str else None
+    metrics_path = cohort_metrics if cohort_metrics and cohort_metrics.exists() else STUDENT_METRICS_FILE
+    if metrics_path.exists():
+        df_m = pd.read_csv(metrics_path, dtype={"student_id": str})
+        m_matches = df_m[df_m["student_id"] == student_id]
+        if not m_matches.empty:
+            m = m_matches.iloc[0]
+            graduation_info = {
+                "graduation_ready": bool(m.get("graduation_ready", False)),
+                "graduation_semester": str(m.get("graduation_semester", "")),
+                "graduation_timing": str(m.get("graduation_timing", "")),
+                "passed_credits": float(m.get("passed_credits", 0.0)),
+                "gpa_4": float(m.get("gpa_4", 0.0)) if pd.notna(m.get("gpa_4")) else None,
+                "degree_classification": str(m.get("degree_classification", "")),
+                "ctxh_days": int(m.get("ctxh_days_cumulative", 0)),
+            }
+
+    english_pass = str(student_row.get("english_pass", False)).casefold() == "true"
+    result = {
+        "courses": courses,
+        "electives": electives,
+        "exempted_english": sorted(list(exempted_english)),
+        "english_pass": english_pass,
+        "graduation_info": graduation_info,
+    }
     if print_report:
         print(f"\n{'='*75}")
         print(f" CÁC MÔN CẦN HỌC / HỌC LẠI - SINH VIÊN: {student_id} ".center(75, "="))
         print(f"{'='*75}")
+        if graduation_info.get("graduation_ready"):
+            timing_map = {"on_time": "ĐÚNG HẠN", "early": "SỚM HẠN", "late": "TRỄ HẠN"}
+            t_lbl = timing_map.get(graduation_info.get("graduation_timing"), graduation_info.get("graduation_timing", ""))
+            sem_lbl = graduation_info.get("graduation_semester", "")
+            gpa_lbl = f"{graduation_info['gpa_4']:.2f}" if graduation_info.get("gpa_4") is not None else "-"
+            print(f"[★] Trạng thái học vụ: ĐÃ TỐT NGHIỆP {t_lbl} (Học kỳ: {sem_lbl})")
+            print(f"    - Xếp loại: {graduation_info.get('degree_classification', '')} | GPA: {gpa_lbl} | CTXH: {graduation_info.get('ctxh_days', 0)} ngày")
+            print(f"    - Tổng tín chỉ tích lũy: {graduation_info.get('passed_credits', 0.0):g} TC (Đã đạt chuẩn tốt nghiệp)")
+            print(f"{'-'*75}")
+        if english_pass:
+            print("[*] Chuẩn ngoại ngữ đầu ra: ĐÃ ĐẠT")
+            print("    (Miễn học toàn bộ chuỗi môn Anh văn: LA1003, LA1005, LA1007, LA1009)")
+        elif exempted_english:
+            exempted_str = ", ".join(sorted(exempted_english))
+            print(f"[*] Chuẩn ngoại ngữ đầu ra: CHƯA ĐẠT")
+            print(f"    (Miễn học theo kết quả kiểm tra đầu vào: {exempted_str})")
+        else:
+            print("[*] Chuẩn ngoại ngữ đầu ra: CHƯA ĐẠT (Phải học từ Anh văn 1: LA1003)")
+        print(f"{'-'*75}")
         if courses.empty:
             print("Không còn môn bắt buộc nào chưa đậu.")
         else:
@@ -647,4 +700,214 @@ def view_ctxh_distribution(cohort, print_report=True):
 
 
 analyze_ctxh_distribution = view_ctxh_distribution
+
+
+def summarize_cohort_results(cohort, print_report=True):
+    """Tổng kết kết quả học vụ của một khóa: số lượng tốt nghiệp, thôi học và tiếp tục học.
+
+    Parameters
+    ----------
+    cohort : str
+        Mã khóa (VD: 'K13', 'K14', '13', 'k13',...).
+    print_report : bool
+        Có in báo cáo định dạng ra màn hình hay không (mặc định: True).
+
+    Returns
+    -------
+    dict or None
+        Từ điển chứa thống kê chi tiết theo 3 nhóm trạng thái: graduated, dropout, continuing;
+        hoặc None nếu mã khóa không hợp lệ.
+    """
+    cohort_str = str(cohort).strip().upper()
+    if not cohort_str.startswith("K") and cohort_str.isdigit():
+        cohort_str = f"K{cohort_str}"
+
+    if not STUDENT_METRICS_FILE.exists():
+        if print_report:
+            print(f"[!] Lỗi: Không tìm thấy file dữ liệu học vụ: {STUDENT_METRICS_FILE}")
+        return None
+
+    df_metrics = pd.read_csv(STUDENT_METRICS_FILE, dtype={"student_id": str, "cohort": str})
+    df_metrics["cohort"] = df_metrics["cohort"].astype(str).str.strip().str.upper()
+
+    df_student = (
+        pd.read_csv(STUDENT_FILE, dtype={"student_id": str, "cohort": str})
+        if STUDENT_FILE.exists()
+        else pd.DataFrame()
+    )
+    if not df_student.empty:
+        df_student["cohort"] = df_student["cohort"].astype(str).str.strip().str.upper()
+
+    c_metrics = df_metrics[df_metrics["cohort"] == cohort_str].copy()
+    c_student = (
+        df_student[df_student["cohort"] == cohort_str].copy()
+        if not df_student.empty
+        else pd.DataFrame()
+    )
+
+    if c_metrics.empty and c_student.empty:
+        if print_report:
+            known = sorted(df_student["cohort"].unique().tolist()) if not df_student.empty else []
+            print(f"[!] Không tìm thấy khóa {cohort_str} trong hệ thống.")
+            if known:
+                print(f"    Các khóa có sẵn: {', '.join(known)}")
+        return None
+
+    total_cohort_size = len(c_student) if not c_student.empty else len(c_metrics)
+
+    if c_metrics.empty:
+        if print_report:
+            print(f"\n{'='*82}")
+            print(f" TỔNG KẾT KẾT QUẢ HỌC VỤ - KHÓA {cohort_str} (N = {total_cohort_size}) ".center(82, "="))
+            print(f"{'='*82}")
+            print(f"Tổng số sinh viên trong danh sách khóa: {total_cohort_size} sinh viên")
+            print(f"[i] Khóa này chưa có dữ liệu học kỳ mô phỏng hoặc chưa bắt đầu quá trình đào tạo.\n")
+        return {
+            "cohort": cohort_str,
+            "total_students": total_cohort_size,
+            "has_metrics": False,
+        }
+
+    # Ba nhóm trạng thái học vụ
+    grad_df = c_metrics[c_metrics["graduation_ready"] == True].copy()
+    drop_df = c_metrics[c_metrics["dropout"] == True].copy()
+    cont_df = c_metrics[(c_metrics["graduation_ready"] == False) & (c_metrics["dropout"] == False)].copy()
+
+    n = len(c_metrics)
+    grad_count = len(grad_df)
+    drop_count = len(drop_df)
+    cont_count = len(cont_df)
+
+    grad_rate = (grad_count / n) * 100 if n else 0.0
+    drop_rate = (drop_count / n) * 100 if n else 0.0
+    cont_rate = (cont_count / n) * 100 if n else 0.0
+
+    def ascii_bar(pct, length=25):
+        filled = int(round(pct / 100 * length))
+        return "█" * filled + "░" * (length - filled)
+
+    result = {
+        "cohort": cohort_str,
+        "total_students": total_cohort_size,
+        "tracked_students": n,
+        "has_metrics": True,
+        "graduated": {
+            "count": grad_count,
+            "rate": grad_rate,
+            "by_classification": grad_df["degree_classification"].value_counts().to_dict(),
+            "by_timing": grad_df["graduation_timing"].value_counts().to_dict(),
+            "by_semester": grad_df["graduation_semester"].value_counts().to_dict(),
+        },
+        "dropout": {
+            "count": drop_count,
+            "rate": drop_rate,
+            "by_type": drop_df["dropout_type"].value_counts().to_dict(),
+            "by_reason": drop_df["dropout_reason"].value_counts().to_dict(),
+            "by_semester": drop_df["dropout_semester"].value_counts().to_dict(),
+        },
+        "continuing": {
+            "count": cont_count,
+            "rate": cont_rate,
+            "avg_gpa": float(cont_df["gpa_4"].mean()) if cont_count else 0.0,
+            "avg_passed_credits": float(cont_df["passed_credits"].mean()) if cont_count else 0.0,
+            "avg_missing_courses": float(cont_df["missing_required_courses"].mean()) if cont_count else 0.0,
+            "english_pass_count": int((cont_df["english_pass"] == True).sum()),
+            "thesis_eligible_count": int((cont_df["thesis_eligible"] == True).sum()),
+        },
+    }
+
+    if print_report:
+        print(f"\n{'='*82}")
+        print(f" TỔNG KẾT KẾT QUẢ HỌC VỤ THEO KHÓA - KHÓA {cohort_str} (SĨ SỐ: {n}) ".center(82, "="))
+        print(f"{'='*82}")
+        print(f"Tổng số sinh viên theo dõi: {n} sinh viên\n")
+        print(">>> CƠ CẤU TRẠNG THÁI HỌC VỤ <<<")
+        print(f"  1. Đã tốt nghiệp (Graduated)     : {grad_count:>4} SV ({grad_rate:5.1f}%) [{ascii_bar(grad_rate)}]")
+        print(f"  2. Thôi học / Bỏ học (Dropout)   : {drop_count:>4} SV ({drop_rate:5.1f}%) [{ascii_bar(drop_rate)}]")
+        print(f"  3. Đang tiếp tục học (In Study)  : {cont_count:>4} SV ({cont_rate:5.1f}%) [{ascii_bar(cont_rate)}]")
+
+        # Chi tiết Tốt nghiệp
+        print(f"\n{'-'*82}")
+        print(f" CHI TIẾT 1: SINH VIÊN ĐÃ TỐT NGHIỆP ({grad_count} SV - {grad_rate:.1f}%) ".center(82, "-"))
+        print(f"{'-'*82}")
+        if grad_count > 0:
+            cls_map = {
+                "excellent": "Xuất sắc",
+                "very_good": "Giỏi",
+                "good": "Khá giỏi",
+                "fairly_good": "Khá",
+                "average": "Trung bình",
+                "below_average": "Trung bình yếu",
+            }
+            cls_counts = grad_df["degree_classification"].value_counts()
+            print("  * Phân loại xếp loại tốt nghiệp:")
+            for cls_code, cnt in cls_counts.items():
+                lbl = cls_map.get(str(cls_code), str(cls_code))
+                print(f"    - {lbl:<25} ({cls_code}): {cnt:>4} SV ({(cnt/grad_count)*100:5.1f}%)")
+            sem_grad = grad_df["graduation_semester"].value_counts().to_dict()
+            sem_str = ", ".join(f"{k}: {v} SV" for k, v in sem_grad.items())
+            print(f"  * Học kỳ tốt nghiệp: {sem_str}")
+            on_time = (grad_df["graduation_timing"] == "on_time").sum()
+            print(f"  * Tiến độ thời gian: {on_time}/{grad_count} tốt nghiệp đúng hạn ({(on_time/grad_count)*100:.1f}%)")
+        else:
+            print("  [i] Khóa này chưa có sinh viên tốt nghiệp (chưa đến giai đoạn xét tốt nghiệp).")
+
+        # Chi tiết Thôi học
+        print(f"\n{'-'*82}")
+        print(f" CHI TIẾT 2: SINH VIÊN THÔI HỌC / BỎ HỌC ({drop_count} SV - {drop_rate:.1f}%) ".center(82, "-"))
+        print(f"{'-'*82}")
+        if drop_count > 0:
+            type_map = {
+                "forced": "Buộc thôi học (Vi phạm quy chế học vụ)",
+                "voluntary": "Tự nguyện thôi học (Cá nhân/Gia đình)",
+            }
+            print("  * Hình thức thôi học:")
+            for t_code, cnt in drop_df["dropout_type"].value_counts().items():
+                lbl = type_map.get(str(t_code), str(t_code))
+                print(f"    - {lbl:<42}: {cnt:>4} SV ({(cnt/drop_count)*100:5.1f}%)")
+
+            reason_map = {
+                "low_pass_credits_two_consecutive_semesters": "Hai kỳ liên tiếp không đạt đủ số tín chỉ tối thiểu (<10 TC)",
+                "max_semesters_exceeded": "Vượt quá khung thời gian đào tạo tối đa quy định",
+                "background": "Lý do cá nhân / Hoàn cảnh gia đình",
+                "academic": "Kết quả học tập không đáp ứng yêu cầu",
+            }
+            print("  * Nguyên nhân thôi học cụ thể:")
+            for r_code, cnt in drop_df["dropout_reason"].value_counts().items():
+                lbl = reason_map.get(str(r_code), str(r_code))
+                print(f"    - {lbl:<60}: {cnt:>4} SV ({(cnt/drop_count)*100:5.1f}%)")
+
+            sem_drop = drop_df["dropout_semester"].value_counts().sort_index()
+            sem_drop_str = " | ".join(f"{k}: {v} SV" for k, v in sem_drop.items())
+            print(f"  * Phân bổ học kỳ thôi học: {sem_drop_str}")
+        else:
+            print("  [i] Không có sinh viên thôi học trong khóa này.")
+
+        # Chi tiết Đang tiếp tục học
+        print(f"\n{'-'*82}")
+        print(f" CHI TIẾT 3: SINH VIÊN ĐANG TIẾP TỤC HỌC ({cont_count} SV - {cont_rate:.1f}%) ".center(82, "-"))
+        print(f"{'-'*82}")
+        if cont_count > 0:
+            avg_gpa = cont_df["gpa_4"].mean()
+            avg_creds = cont_df["passed_credits"].mean()
+            eng_pass = (cont_df["english_pass"] == True).sum()
+            thesis_ready = (cont_df["thesis_eligible"] == True).sum()
+            avg_missing = cont_df["missing_required_courses"].mean()
+
+            print(f"  * Điểm trung bình tích lũy hiện tại (GPA 4.0): {avg_gpa:.2f} / 4.00")
+            print(f"  * Số tín chỉ tích lũy trung bình              : {avg_creds:.1f} tín chỉ")
+            print(f"  * Đã đạt chuẩn tiếng Anh                      : {eng_pass:>4} SV ({(eng_pass/cont_count)*100:5.1f}%)")
+            print(f"  * Đạt điều kiện làm KLTN (>=12 ngày CTXH, TA) : {thesis_ready:>4} SV ({(thesis_ready/cont_count)*100:5.1f}%)")
+            print(f"  * Số môn bắt buộc còn thiếu trung bình        : {avg_missing:.1f} môn")
+        else:
+            print("  [i] Không có sinh viên nào đang tiếp tục học.")
+
+        print(f"{'='*82}\n")
+
+    return result
+
+
+view_cohort_status = summarize_cohort_results
+summarize_cohort_status = summarize_cohort_results
+
 
