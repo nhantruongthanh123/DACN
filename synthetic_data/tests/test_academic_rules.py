@@ -10,6 +10,7 @@ sys.path.insert(0, str(RULES_DIR))
 
 from academic_rules import (
     GENERATOR_CONFIG,
+    academic_suspension_semesters,
     add_gpa_summaries,
     allocate_course_rosters,
     balanced_class_sizes,
@@ -19,6 +20,7 @@ from academic_rules import (
     filter_students_from_2013,
     generate_observed_score,
     generate_student_profile,
+    semester_index,
     students_by_course_from_eligibility,
 )
 
@@ -177,6 +179,96 @@ class AcademicScoreRulesTests(unittest.TestCase):
             "2310002": [],
             "2310003": [],
         })
+
+    def test_two_low_credit_terms_trigger_only_one_suspension_term(self):
+        history = pd.DataFrame([
+            {
+                "student_id": "1310001",
+                "course_code": "CO0001",
+                "semester": semester_index("HK131"),
+                "status": "Pass",
+            },
+            {
+                "student_id": "1310001",
+                "course_code": "CO0002",
+                "semester": semester_index("HK132"),
+                "status": "Pass",
+            },
+            {
+                "student_id": "1310001",
+                "course_code": "CO0003",
+                "semester": semester_index("HK142"),
+                "status": "Pass",
+            },
+        ])
+        credits = {
+            "CO0001": 5,
+            "CO0002": 5,
+            "CO0003": 5,
+        }
+        semesters = [
+            "HK131", "HK132", "HK141", "HK142",
+            "HK151", "HK152", "HK161",
+        ]
+
+        suspensions = academic_suspension_semesters(
+            history, semesters, credits
+        )
+
+        self.assertEqual(suspensions, {"HK141", "HK152"})
+
+    def test_suspended_student_cannot_enroll_then_can_resume_next_term(self):
+        history = pd.DataFrame([
+            {
+                "student_id": "1310001",
+                "course_code": "CO0001",
+                "semester": semester_index("HK131"),
+                "status": "Pass",
+            },
+            {
+                "student_id": "1310001",
+                "course_code": "CO0002",
+                "semester": semester_index("HK132"),
+                "status": "Pass",
+            },
+        ])
+        students = pd.DataFrame([{
+            "student_id": "1310001",
+            "base_score": 6.5,
+            "english_pass": True,
+            "ctxh_days_by_semester": [],
+        }])
+        prerequisites = pd.DataFrame(columns=[
+            "course_code", "related_course_code", "relation_type",
+        ])
+        credits = {
+            "CO0001": 5,
+            "CO0002": 5,
+            "CO1001": 3,
+        }
+        scheduled = {"13": ["CO1001"]}
+
+        paused, _ = calculate_eligibility_for_schedule(
+            students,
+            history,
+            credits,
+            prerequisites,
+            scheduled,
+            {},
+            semester_code="HK141",
+        )
+        resumed, _ = calculate_eligibility_for_schedule(
+            students,
+            history,
+            credits,
+            prerequisites,
+            scheduled,
+            {},
+            semester_code="HK142",
+        )
+
+        self.assertEqual(paused, {"1310001": []})
+        self.assertEqual(resumed, {"1310001": ["CO1001"]})
 
     def test_stronger_profile_is_less_affected_by_course_difficulty(self):
         low_profile = {

@@ -1,3 +1,4 @@
+import argparse
 import json
 import sys
 from pathlib import Path
@@ -12,6 +13,7 @@ sys.path.insert(0, str(ROOT_DIR / "rules"))
 from academic_rules import (  # noqa: E402
     GENERATOR_CONFIG,
     PROFILE_OUTPUT_FILE,
+    academic_suspension_semesters,
     semester_index,
 )
 
@@ -239,6 +241,11 @@ def _build_student_reports(profiles, history, semesters, tracked_ids, credits):
         student_history = history_by_student.get(
             student_id, history.iloc[0:0].copy()
         )
+        suspension_semesters = academic_suspension_semesters(
+            student_history,
+            student_semesters,
+            credits,
+        )
         details = _profile_graduation_state(
             profile,
             student_history,
@@ -259,7 +266,6 @@ def _build_student_reports(profiles, history, semesters, tracked_ids, credits):
             and semester_index(voluntary_semester)
             <= semester_index(semesters[-1])
         )
-        low_credit_streak = 0
         forced_semester = None
         forced_reason = ""
         observed_count = 0
@@ -281,15 +287,9 @@ def _build_student_reports(profiles, history, semesters, tracked_ids, credits):
                 for code in passed["course_code"].drop_duplicates()
                 if code in credits
             )
-            if complete and passed_credits < graduation_config[
-                "minimum_passed_credits_per_semester"
-            ]:
-                low_credit_streak += 1
-            elif complete:
-                low_credit_streak = 0
-
             progress = details["progress"]
             cumulative_ctxh = _ctxh_days_for_semester(progress, semester)
+            academic_suspension = semester in suspension_semesters
             progress_rows.append({
                 "student_id": student_id,
                 "cohort": f"K{str(student_id)[:2]}",
@@ -316,12 +316,11 @@ def _build_student_reports(profiles, history, semesters, tracked_ids, credits):
                     ]
                 ),
                 "semester_complete": complete,
+                "academic_suspension": academic_suspension,
             })
             observed_count += 1
-            if low_credit_streak >= 2:
-                forced_semester = semester
-                forced_reason = "low_pass_credits_two_consecutive_semesters"
-                break
+            if academic_suspension:
+                continue
             if (
                 semester_index_value - start_index
                 >= graduation_config["dismissal_after_semesters"]
@@ -373,10 +372,7 @@ def _build_student_reports(profiles, history, semesters, tracked_ids, credits):
                 if band["min"] <= float(details["gpa_4"]) < band["max"]:
                     degree_classification = band["label"]
                     break
-        if dropout_reason in {
-            "low_pass_credits_two_consecutive_semesters",
-            "overdue_more_than_two_years",
-        }:
+        if dropout_reason == "overdue_more_than_two_years":
             dropout_type = "forced"
         elif dropped_out:
             dropout_type = "voluntary"
@@ -436,6 +432,15 @@ def _build_student_reports(profiles, history, semesters, tracked_ids, credits):
             "passed_credits": details["passed_credits"],
             "gpa_4": details["gpa_4"],
             "graduation_ready": details["graduation_ready"] and not dropped_out,
+            "academic_suspension_count": sum(
+                semester in suspension_semesters
+                for semester in student_semesters[:observed_count]
+            ),
+            "academic_suspension_semesters": ";".join(
+                semester
+                for semester in student_semesters[:observed_count]
+                if semester in suspension_semesters
+            ),
             "graduation_semester": graduation_semester or "",
             "graduation_timing": timing,
             "degree_classification": degree_classification,
@@ -559,6 +564,21 @@ def _summary_metrics(student_metrics, history):
         len(dropped),
         tracked_count,
     )
+    suspended = student_metrics["academic_suspension_count"].gt(0)
+    add(
+        "academic_suspension_rate",
+        int(suspended.sum()) / tracked_count if tracked_count else 0.0,
+        int(suspended.sum()),
+        tracked_count,
+    )
+    add(
+        "academic_suspension_count_mean",
+        float(student_metrics["academic_suspension_count"].mean())
+        if tracked_count
+        else 0.0,
+        int(student_metrics["academic_suspension_count"].sum()),
+        tracked_count,
+    )
     for dropout_type in ("voluntary", "forced"):
         count = int(student_metrics["dropout_type"].eq(dropout_type).sum())
         add(
@@ -570,7 +590,6 @@ def _summary_metrics(student_metrics, history):
     for reason in (
         "background",
         "academic",
-        "low_pass_credits_two_consecutive_semesters",
         "overdue_more_than_two_years",
     ):
         count = int(student_metrics["dropout_reason"].eq(reason).sum())
@@ -623,7 +642,19 @@ def _summary_metrics(student_metrics, history):
     return pd.DataFrame(rows)
 
 
-def generate_academic_metrics():
+def _normalize_cohort(cohort):
+    if cohort is None:
+        return None
+    value = str(cohort).strip().upper()
+    if value.startswith("K"):
+        value = value[1:]
+    if len(value) != 2 or not value.isdigit():
+        raise ValueError("Cohort must be a two-digit year such as 13 or K13")
+    return value
+
+
+def generate_academic_metrics(cohort=None):
+    cohort = _normalize_cohort(cohort)
     profiles = pd.read_csv(PROFILE_OUTPUT_FILE, dtype={"student_id": str})
     students = pd.read_csv(STUDENT_FILE, dtype={"student_id": str})
     profiles = profiles.merge(
@@ -633,39 +664,60 @@ def generate_academic_metrics():
         validate="one_to_one",
     )
     history, observed_semesters, tracked_ids = _load_enrollment_history(profiles)
+    if cohort:
+        cohort_ids = {
+            student_id
+            for student_id in tracked_ids
+            if str(student_id).startswith(cohort)
+        }
+        history = history[history["student_id"].isin(cohort_ids)].copy()
+        tracked_ids = cohort_ids
+        profiles = profiles[
+            profiles["student_id"].str.startswith(cohort)
+        ].copy()
     course_catalog = pd.read_csv(COURSE_FILE, dtype={"course_code": str})
     credits = dict(zip(course_catalog["course_code"], course_catalog["credits"]))
     progress, student_metrics = _build_student_reports(
         profiles, history, observed_semesters, tracked_ids, credits
     )
     score_distribution, grade_distribution = _distribution_tables(history)
-    METRICS_DIR.mkdir(parents=True, exist_ok=True)
+    metrics_dir = METRICS_DIR / f"K{cohort}" if cohort else METRICS_DIR
+    metrics_dir.mkdir(parents=True, exist_ok=True)
     progress.to_csv(
-        METRICS_DIR / "student_progress.csv", index=False, encoding="utf-8-sig"
+        metrics_dir / "student_progress.csv",
+        index=False,
+        encoding="utf-8-sig",
     )
     student_metrics.to_csv(
-        METRICS_DIR / "student_metrics.csv", index=False, encoding="utf-8-sig"
+        metrics_dir / "student_metrics.csv",
+        index=False,
+        encoding="utf-8-sig",
     )
     score_distribution.to_csv(
-        METRICS_DIR / "score_distribution.csv",
+        metrics_dir / "score_distribution.csv",
         index=False,
         encoding="utf-8-sig",
     )
     grade_distribution.to_csv(
-        METRICS_DIR / "letter_grade_distribution.csv",
+        metrics_dir / "letter_grade_distribution.csv",
         index=False,
         encoding="utf-8-sig",
     )
     _summary_metrics(student_metrics, history).to_csv(
-        METRICS_DIR / "university_metrics.csv",
+        metrics_dir / "university_metrics.csv",
         index=False,
         encoding="utf-8-sig",
     )
     print(
         f"Created student and university metrics for "
-        f"{len(student_metrics)} students in {METRICS_DIR}"
+        f"{len(student_metrics)} students in {metrics_dir}"
     )
 
 
 if __name__ == "__main__":
-    generate_academic_metrics()
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--cohort",
+        help="Limit reports to one cohort (for example, 13 or K13)",
+    )
+    generate_academic_metrics(parser.parse_args().cohort)

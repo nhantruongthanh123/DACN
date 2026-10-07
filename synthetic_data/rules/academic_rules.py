@@ -3,6 +3,7 @@ import json
 import hashlib
 import json
 import math
+import os
 import sys
 
 import numpy as np
@@ -241,7 +242,17 @@ def load_student_profiles():
             "student_profiles.csv is missing required columns: "
             + ", ".join(sorted(missing_columns))
         )
-    return filter_students_from_2013(students)
+    students = filter_students_from_2013(students)
+    cohort_filter = os.environ.get("SYNTHETIC_DATA_COHORT_FILTER", "").strip()
+    if cohort_filter:
+        if len(cohort_filter) != 2 or not cohort_filter.isdigit():
+            raise ValueError(
+                "SYNTHETIC_DATA_COHORT_FILTER must be a two-digit cohort year"
+            )
+        students = students[
+            students["student_id"].str.startswith(cohort_filter)
+        ].copy()
+    return students
 
 
 def balanced_class_sizes(demand, max_size=120):
@@ -528,10 +539,69 @@ def ctxh_days_before_semester(student, semester_code):
     )
 
 
-def _has_two_consecutive_low_credit_semesters(
+def academic_suspension_semesters(
+    student_history, semesters, credits, config=None
+):
+    """Return the one-semester pauses triggered by consecutive low-credit terms."""
+    config = config or GENERATOR_CONFIG
+    if "status" not in student_history or "course_code" not in student_history:
+        return set()
+
+    semester_column = (
+        "semester_code"
+        if "semester_code" in student_history
+        else "semester"
+        if "semester" in student_history
+        else None
+    )
+    if semester_column is None:
+        return set()
+
+    low_credit_threshold = config["student_progress"]["graduation"][
+        "minimum_passed_credits_per_semester"
+    ]
+    low_credit_streak = 0
+    suspensions = set()
+
+    for semester in semesters:
+        current_index = semester_index(semester)
+        if low_credit_streak >= 2:
+            suspensions.add(semester)
+            low_credit_streak = 0
+            continue
+
+        if semester_column == "semester_code":
+            term_history = student_history[
+                student_history[semester_column].astype(str).str.upper()
+                == semester.upper()
+            ]
+        else:
+            term_history = student_history[
+                pd.to_numeric(
+                    student_history[semester_column], errors="coerce"
+                )
+                == current_index
+            ]
+        passed = term_history[
+            term_history["status"].astype(str).str.casefold() == "pass"
+        ]
+        passed_credits = sum(
+            float(credits[course_code])
+            for course_code in passed["course_code"].drop_duplicates()
+            if course_code in credits
+        )
+        if passed_credits < low_credit_threshold:
+            low_credit_streak += 1
+        else:
+            low_credit_streak = 0
+
+    return suspensions
+
+
+def _is_academic_suspension_semester(
     student_id, history, credits, semester_code, config
 ):
-    if history.empty or "semester" not in history:
+    if history.empty:
         return False
     progress_config = config["student_progress"]
     start_semester = progress_config["cohort_start_semester"].get(
@@ -540,39 +610,21 @@ def _has_two_consecutive_low_credit_semesters(
     if start_semester is None:
         return False
     current_index = semester_index(semester_code)
-    start_index = semester_index(start_semester)
-    completed_semesters = [
+    semesters = [
         semester
         for semester in progress_config["observed_semesters"]
-        if start_index <= semester_index(semester) < current_index
+        if semester_index(start_semester)
+        <= semester_index(semester)
+        <= current_index
     ]
-    if current_index - start_index >= progress_config["graduation"][
-        "dismissal_after_semesters"
-    ]:
-        return True
-
-    student_history = history[history["student_id"] == student_id]
-    consecutive_low = 0
-    for semester in completed_semesters:
-        term_index = semester_index(semester)
-        term_rows = student_history[student_history["semester"] == term_index]
-        passed = term_rows[
-            term_rows["status"].astype(str).str.casefold() == "pass"
-        ]
-        passed_credits = sum(
-            float(credits[course_code])
-            for course_code in passed.get("course_code", pd.Series(dtype=str))
-            if course_code in credits
-        )
-        if passed_credits < progress_config["graduation"][
-            "minimum_passed_credits_per_semester"
-        ]:
-            consecutive_low += 1
-            if consecutive_low >= 2:
-                return True
-        else:
-            consecutive_low = 0
-    return False
+    student_history = (
+        history[history["student_id"] == student_id]
+        if "student_id" in history
+        else history
+    )
+    return semester_code in academic_suspension_semesters(
+        student_history, semesters, credits, config
+    )
 
 
 def resolve_student_profile(student, config=None, *, student_id=None):
@@ -1021,9 +1073,21 @@ def calculate_eligibility_for_schedule(
             dropout_semester
         ):
             continue
-        if _has_two_consecutive_low_credit_semesters(
+        progress_config = config["student_progress"]
+        cohort_start = progress_config["cohort_start_semester"].get(
+            str(student_id)[:2]
+        )
+        if cohort_start is not None and semester_index(
+            semester_code
+        ) - semester_index(cohort_start) >= (
+            progress_config["graduation"]["dismissal_after_semesters"]
+        ):
+            eligibility[student_id] = []
+            continue
+        if _is_academic_suspension_semester(
             student_id, history, credits, semester_code, config
         ):
+            eligibility[student_id] = []
             continue
 
         thesis_courses = set(

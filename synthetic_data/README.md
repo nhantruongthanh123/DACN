@@ -95,14 +95,28 @@ ngưỡng phân loại GPA4 cũng được cấu hình.
 
 Dropout tự nguyện dùng xác suất 30% cho nhóm rủi ro (background thấp hoặc
 academic level thấp), với trọng số nguyên nhân background/academic 95%/5%.
-Buộc thôi học nếu có hai kỳ liên tiếp dưới 10 tín chỉ pass hoặc đã qua 12 học
-kỳ mà chưa tốt nghiệp. Kỳ không đăng ký được ghi rõ trong `student_progress.csv`.
+Sinh viên đạt dưới 11 tín chỉ trong hai kỳ liên tiếp phải tạm dừng đúng một
+học kỳ: không đăng ký môn, nhưng tiến độ CTXH và trạng thái tiếng Anh vẫn được
+ghi nhận. Sau kỳ dừng, sinh viên có thể đăng ký học lại. Buộc thôi học nếu đã
+qua 12 học kỳ mà chưa tốt nghiệp. Kỳ tạm dừng được đánh dấu trong
+`student_progress.csv`, không bị tính là dropout.
 
 Metric học tập chỉ tính sinh viên có enrollment trong các kỳ đã cấu hình và
 được sinh. K13–K22 chưa có lịch sử lớp/enrollment nên không bị tính là bỏ học
 hoặc đưa vào mẫu số. HK261 đang diễn ra; điểm chưa chấm không tham gia phân
 phối điểm và tỷ lệ grade. Khi chưa có sinh viên tốt nghiệp trong dữ liệu quan
 sát, các tỷ lệ tốt nghiệp/phân loại có mẫu số 0 và giá trị 0.
+
+Để tái sinh riêng một khóa và giữ nguyên enrollment/lớp của các khóa còn lại,
+chạy:
+
+```bash
+python synthetic_data/tools/regenerate_cohort.py --cohort 13
+```
+
+Script chạy lần lượt từng kỳ cho khóa được chọn, giữ lại các dòng class/
+enrollment của khóa khác, rồi ghi metric riêng vào
+`synthetic_data/generated/metrics/K13/`.
 
 Nguồn dữ liệu hiện có 9.890 sinh viên, thuộc khóa 2013–2016 (mã bắt đầu
 `13`–`16`). `tools/generate_student_cohorts.py` giữ nguyên tên và các trường

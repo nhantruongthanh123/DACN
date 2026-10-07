@@ -91,13 +91,28 @@ Kết quả được ghi vào:
 
 Lưu ý: chạy lệnh này sẽ ghi đè các file generated hiện có.
 
+### `regenerate_cohort.py`
+
+Tái sinh class và enrollment tuần tự cho riêng một khóa, giữ lại dữ liệu của
+các khóa khác trong các CSV dùng chung, sau đó tạo metric riêng cho khóa đó.
+Kỳ tạm dừng do hai kỳ liên tiếp đạt dưới 11 tín chỉ được tạo không có enrollment;
+metric ghi cờ `academic_suspension` và không coi đây là dropout.
+
+```bash
+python synthetic_data/tools/regenerate_cohort.py --cohort 13
+```
+
+Metric được ghi vào `synthetic_data/generated/metrics/K13/`. Không chạy
+`add_base_score.py` trong quy trình này vì profile của các khóa không được tái
+tạo hoặc thay đổi.
+
 ### `generate_academic_metrics.py`
 
 Đọc profile cùng các enrollment/class thuộc `student_progress.observed_semesters`
 trong config, rồi tạo các báo cáo:
 
 - `student_progress.csv`: mỗi sinh viên–học kỳ, có đăng ký hay không, tín chỉ
-  đăng ký/đậu và CTXH tích lũy.
+  đăng ký/đậu, CTXH tích lũy và cờ `academic_suspension`.
 - `student_metrics.csv`: profile, GPA/tín chỉ đã đậu, điều kiện đồ án/tốt
   nghiệp, phân loại bằng và nguyên nhân dropout.
 - `university_metrics.csv`: tỷ lệ dropout, tiếng Anh/đồ án/tốt nghiệp, phân loại
@@ -115,7 +130,11 @@ Có thể chạy riêng sau khi các file class/enrollment đã tồn tại:
 
 ```bash
 python synthetic_data/tools/generate_academic_metrics.py
+python synthetic_data/tools/generate_academic_metrics.py --cohort 13
 ```
+
+Khi truyền `--cohort`, chỉ metric của khóa đó được tạo và ghi vào thư mục
+`generated/metrics/K<khóa>/`; các metric tổng hợp hiện có không bị ghi đè.
 
 ### `generate_student_progress.py`
 
