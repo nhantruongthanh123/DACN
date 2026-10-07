@@ -1,4 +1,4 @@
-﻿semester_id,semester_code,academic_year,term
+semester_id,semester_code,academic_year,term
 1,HK131,2013-2014,1
 2,HK132,2013-2014,2
 3,HK233,2023-2024,3
@@ -9,3 +9,4 @@
 8,HK152,2015-2016,2
 9,HK253,2025-2026,3
 10,HK161,2016-2017,1
+11,HK162,2016-2017,2
