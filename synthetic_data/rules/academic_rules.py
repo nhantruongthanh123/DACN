@@ -573,7 +573,8 @@ def _student_value(student, field, default=None):
     return getattr(student, field, default)
 
 
-def ctxh_days_before_semester(student, semester_code):
+def ctxh_days_before_semester(student, semester_code, config=None):
+    config = config or GENERATOR_CONFIG
     progress = _student_value(student, "ctxh_days_by_semester", [])
     if progress is None or (
         not isinstance(progress, (list, str)) and pd.isna(progress)
@@ -587,6 +588,15 @@ def ctxh_days_before_semester(student, semester_code):
     if not isinstance(progress, list):
         raise ValueError("ctxh_days_by_semester must be an array")
     current_index = semester_index(semester_code)
+    if not progress or max((semester_index(entry["semester"]) for entry in progress), default=-999) < current_index - 1:
+        student_id = _student_value(student, "student_id", "")
+        if student_id:
+            profile = {
+                field: _student_value(student, field)
+                for field in PROFILE_FIELDS
+            }
+            if any(profile.get(k) is not None for k in ["discipline", "motivation"]):
+                progress = _generate_ctxh_progress(student_id, profile, config)
     return max(
         (
             int(entry["cumulative_days"])
@@ -618,14 +628,21 @@ def academic_suspension_semesters(
     low_credit_threshold = config["student_progress"]["graduation"][
         "minimum_passed_credits_per_semester"
     ]
+    standard_semesters = config.get("student_progress", {}).get(
+        "graduation", {}
+    ).get("standard_semesters", 8)
     low_credit_streak = 0
     suspensions = set()
 
-    for semester in semesters:
+    for idx, semester in enumerate(semesters):
+        sem_num = idx + 1
         current_index = semester_index(semester)
         if low_credit_streak >= 2:
             suspensions.add(semester)
             low_credit_streak = 0
+            continue
+
+        if sem_num >= standard_semesters - 1:
             continue
 
         if semester_column == "semester_code":
@@ -1077,6 +1094,21 @@ def get_exempted_english_courses(student, config=None):
     return mapping[skip_count]
 
 
+def is_english_passed(student, passed_courses=None, config=None):
+    """Return True if the student has satisfied English graduation requirements.
+
+    A student satisfies the English requirement if:
+    1. english_pass in profile is True (exempt from all English courses upon admission), OR
+    2. All courses in ENGLISH_COURSE_CODES (LA1003-LA1009) are either exempted or passed.
+    """
+    if str(_student_value(student, "english_pass", False)).casefold() == "true":
+        return True
+    if passed_courses is None:
+        return False
+    exempted = get_exempted_english_courses(student, config)
+    return set(ENGLISH_COURSE_CODES).issubset(set(passed_courses) | exempted)
+
+
 def can_skip_la1003(student_id, base_score=None, *, student=None, config=None):
     target = student if student is not None else student_id
     if hasattr(target, "get") or hasattr(target, "student_id") or isinstance(target, dict):
@@ -1296,11 +1328,18 @@ def calculate_eligibility_for_schedule(
             eligibility[student_id] = []
             continue
 
+        prefix = str(student.student_id)[:2]
+        scheduled = scheduled_courses.get(prefix)
+        if scheduled is None:
+            continue
+        passed_courses = passed.get(student.student_id, set())
+        failed_courses = failed.get(student.student_id, set())
+
         thesis_courses = set(
             config["student_progress"]["graduation"]["thesis_course_codes"]
         )
         thesis_eligible = (
-            str(getattr(student, "english_pass", False)).casefold() == "true"
+            is_english_passed(student, passed_courses, config)
             and ctxh_days_before_semester(student, semester_code)
             >= config["student_progress"]["ctxh"]["minimum_for_thesis"]
         )
@@ -1311,12 +1350,6 @@ def calculate_eligibility_for_schedule(
                 return False
             return course_code not in thesis_courses or thesis_eligible
 
-        prefix = str(student.student_id)[:2]
-        scheduled = scheduled_courses.get(prefix)
-        if scheduled is None:
-            continue
-        passed_courses = passed.get(student.student_id, set())
-        failed_courses = failed.get(student.student_id, set())
         thesis_pending = any(
             code in thesis_courses and code not in passed_courses
             for code in scheduled

@@ -16,6 +16,7 @@ from academic_rules import (  # noqa: E402
     academic_suspension_semesters,
     get_exempted_english_courses,
     is_academic_dismissal,
+    is_english_passed,
     semester_index,
 )
 
@@ -146,7 +147,7 @@ def _profile_graduation_state(
         else 0
     )
     graduation_config = GENERATOR_CONFIG["student_progress"]["graduation"]
-    english_pass = str(profile.get("english_pass", False)).casefold() == "true"
+    english_pass = is_english_passed(profile, passed_courses, GENERATOR_CONFIG)
     exempted_english = get_exempted_english_courses(profile, GENERATOR_CONFIG)
     effective_required_courses = required_courses - exempted_english
     missing_courses = effective_required_courses - passed_courses
@@ -168,13 +169,16 @@ def _profile_graduation_state(
             ]
             term_ctxh_days = _ctxh_days_for_semester(progress, semester)
             term_passed = set(completed_through_term["course_code"])
+            term_english_pass = is_english_passed(
+                profile, term_passed, GENERATOR_CONFIG
+            )
             if (
                 effective_required_courses.issubset(term_passed)
                 and term_ctxh_days
                 >= GENERATOR_CONFIG["student_progress"]["ctxh"][
                     "minimum_for_graduation"
                 ]
-                and english_pass
+                and term_english_pass
             ):
                 graduation_semester = semester
                 break
@@ -290,6 +294,20 @@ def _build_student_reports(profiles, history, semesters, tracked_ids, credits):
             progress = details["progress"]
             cumulative_ctxh = _ctxh_days_for_semester(progress, semester)
             academic_suspension = semester in suspension_semesters
+            completed_through_term = student_history[
+                student_history["semester_index"].le(semester_index(semester))
+                & student_history["status"].astype(str).str.casefold().eq("pass")
+            ]
+            term_english_pass = is_english_passed(
+                profile, set(completed_through_term["course_code"]), GENERATOR_CONFIG
+            )
+            completed_before_term = student_history[
+                student_history["semester_index"].lt(semester_index(semester))
+                & student_history["status"].astype(str).str.casefold().eq("pass")
+            ]
+            before_english_pass = is_english_passed(
+                profile, set(completed_before_term["course_code"]), GENERATOR_CONFIG
+            )
             progress_rows.append({
                 "student_id": student_id,
                 "cohort": f"K{str(student_id)[:2]}",
@@ -303,9 +321,9 @@ def _build_student_reports(profiles, history, semesters, tracked_ids, credits):
                 ),
                 "passed_credits": passed_credits,
                 "ctxh_days_cumulative": cumulative_ctxh,
-                "english_pass": details["english_pass"],
+                "english_pass": term_english_pass,
                 "thesis_eligible_before_semester": (
-                    details["english_pass"]
+                    before_english_pass
                     and _ctxh_days_for_semester(
                         progress,
                         semester,

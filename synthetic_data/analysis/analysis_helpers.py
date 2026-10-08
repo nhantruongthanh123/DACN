@@ -10,6 +10,7 @@ sys.path.insert(0, str(ROOT_DIR / "rules"))
 from academic_rules import (
     GENERATOR_CONFIG,
     get_exempted_english_courses,
+    is_english_passed,
     semester_index,
 )
 CATALOG_DIR = ROOT_DIR / "data" / "catalog"
@@ -195,7 +196,7 @@ def summarize_required_courses(student_id, print_report=True):
                 "ctxh_days": int(m.get("ctxh_days_cumulative", 0)),
             }
 
-    english_pass = str(student_row.get("english_pass", False)).casefold() == "true"
+    english_pass = is_english_passed(student_row, passed)
     result = {
         "courses": courses,
         "electives": electives,
@@ -216,9 +217,12 @@ def summarize_required_courses(student_id, print_report=True):
             print(f"    - Xếp loại: {graduation_info.get('degree_classification', '')} | GPA: {gpa_lbl} | CTXH: {graduation_info.get('ctxh_days', 0)} ngày")
             print(f"    - Tổng tín chỉ tích lũy: {graduation_info.get('passed_credits', 0.0):g} TC (Đã đạt chuẩn tốt nghiệp)")
             print(f"{'-'*75}")
-        if english_pass:
+        if str(student_row.get("english_pass", False)).casefold() == "true":
             print("[*] Chuẩn ngoại ngữ đầu ra: ĐÃ ĐẠT")
             print("    (Miễn học toàn bộ chuỗi môn Anh văn: LA1003, LA1005, LA1007, LA1009)")
+        elif english_pass:
+            print("[*] Chuẩn ngoại ngữ đầu ra: ĐÃ ĐẠT")
+            print("    (Đã hoàn thành các học phần Anh văn trong chương trình đào tạo)")
         elif exempted_english:
             exempted_str = ", ".join(sorted(exempted_english))
             print(f"[*] Chuẩn ngoại ngữ đầu ra: CHƯA ĐẠT")

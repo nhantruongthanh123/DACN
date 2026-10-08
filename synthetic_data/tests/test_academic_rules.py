@@ -30,6 +30,7 @@ from academic_rules import (
     get_exempted_english_courses,
     get_late_semesters_count,
     is_academic_dismissal,
+    is_english_passed,
     is_late_semester,
     semester_from_index,
     semester_index,
@@ -646,6 +647,69 @@ class AcademicScoreRulesTests(unittest.TestCase):
         custom_config["student_progress"]["enrollment_policy"]["acceleration_base_score"] = 9.5
         # Student with score 8.5 does NOT get acceleration under this custom config
         self.assertFalse(wants_acceleration("1310001", 8.5, custom_config))
+
+    def test_is_english_passed_satisfied_by_profile_or_curriculum(self):
+        # 1. Profile english_pass True -> always True
+        student_exempt = {"student_id": "1300001", "english_pass": True}
+        self.assertTrue(is_english_passed(student_exempt))
+
+        # 2. Level 5 skips 1003, 1005, 1007. Needs LA1009.
+        student_l5 = {"student_id": "1300003", "english_pass": False, "english_level": 5}
+        self.assertFalse(is_english_passed(student_l5, set()))
+        self.assertFalse(is_english_passed(student_l5, {"LA1003"}))
+        self.assertTrue(is_english_passed(student_l5, {"LA1009"}))
+
+        # 3. Level 1 skips none. Needs all 4.
+        student_l1 = {"student_id": "1300002", "english_pass": False, "english_level": 1}
+        exempted_l1 = get_exempted_english_courses(student_l1)
+        needed = {"LA1003", "LA1005", "LA1007", "LA1009"} - exempted_l1
+        self.assertFalse(is_english_passed(student_l1, {"LA1003"}))
+        self.assertTrue(is_english_passed(student_l1, needed))
+
+    def test_thesis_eligible_when_student_passed_english_courses(self):
+        students = pd.DataFrame([{
+            "student_id": "1397003",
+            "base_score": 7.0,
+            "english_pass": False,
+            "english_level": 5, # skips 1003, 1005, 1007
+            "ctxh_days_by_semester": [
+                {"semester": "HK161", "cumulative_days": 15},
+            ],
+        }])
+        history = pd.DataFrame([{
+            "student_id": "1397003",
+            "course_code": "LA1009",
+            "status": "Pass",
+        }])
+        credits = {"CO4029": 4, "LA1009": 2}
+        prerequisites = pd.DataFrame(columns=["course_code", "related_course_code", "relation_type"])
+        scheduled = {"13": ["CO4029"]}
+
+        eligible, _ = calculate_eligibility_for_schedule(
+            students,
+            history,
+            credits,
+            prerequisites,
+            scheduled,
+            {},
+            semester_code="HK162",
+        )
+        self.assertEqual(eligible["1397003"], ["CO4029"])
+
+    def test_graduation_phase_semesters_exempt_from_low_credit_suspension(self):
+        # K13 student has < 11 credits in HK161 (sem 7) and HK162 (sem 8)
+        history = pd.DataFrame([
+            {"student_id": "1310001", "course_code": "CO4029", "semester": semester_index("HK161"), "status": "Pass"},
+            {"student_id": "1310001", "course_code": "CO4337", "semester": semester_index("HK162"), "status": "Pass"},
+        ])
+        credits = {"CO4029": 4, "CO4337": 4}
+        semesters = [
+            "HK131", "HK132", "HK141", "HK142",
+            "HK151", "HK152", "HK161", "HK162", "HK171",
+        ]
+        suspensions = academic_suspension_semesters(history, semesters, credits)
+        # Should NOT be suspended in HK171 because sem 7 & 8 are graduation phase
+        self.assertNotIn("HK171", suspensions)
 
 
 if __name__ == "__main__":
