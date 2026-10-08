@@ -64,13 +64,16 @@
       "HK151",
       "HK152",
       "HK161",
-      "HK162"
+      "HK162",
+      "HK171",
+      "HK172"
     ],
     "cohort_start_semester": {
       "13": "HK131",
       "14": "HK141",
       "15": "HK151",
-      "16": "HK161"
+      "16": "HK161",
+      "17": "HK171"
     },
     "ctxh": {
       "minimum_for_thesis": 12,
@@ -110,6 +113,7 @@
     },
     "graduation": {
       "standard_semesters": 8,
+      "max_late_semesters": 4,
       "dismissal_after_semesters": 12,
       "minimum_passed_credits_per_semester": 11,
       "ineligible_thesis_empty_semester_probability": 0.8,
@@ -147,6 +151,16 @@
           "label": "excellent"
         }
       ]
+    },
+    "electives": {
+      "free_credit_limit": 9,
+      "group_c_credit_limit": 15
+    },
+    "enrollment_policy": {
+      "optional_threshold": 15,
+      "optional_16_credit_probability": 0.35,
+      "acceleration_base_score": 8.0,
+      "acceleration_probability": 0.35
     },
     "dropout": {
       "voluntary_probability": 0.3,

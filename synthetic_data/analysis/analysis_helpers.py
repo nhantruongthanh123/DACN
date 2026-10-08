@@ -7,7 +7,11 @@ import pandas as pd
 
 ROOT_DIR = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT_DIR / "rules"))
-from academic_rules import get_exempted_english_courses
+from academic_rules import (
+    GENERATOR_CONFIG,
+    get_exempted_english_courses,
+    semester_index,
+)
 CATALOG_DIR = ROOT_DIR / "data" / "catalog"
 PEOPLE_DIR = ROOT_DIR / "data" / "people"
 CLASSES_DIR = ROOT_DIR / "generated" / "classes"
@@ -768,7 +772,7 @@ def summarize_cohort_results(cohort, print_report=True):
             "has_metrics": False,
         }
 
-    # Ba nhóm trạng thái học vụ
+    # Các nhóm trạng thái học vụ
     grad_df = c_metrics[c_metrics["graduation_ready"] == True].copy()
     drop_df = c_metrics[c_metrics["dropout"] == True].copy()
     cont_df = c_metrics[(c_metrics["graduation_ready"] == False) & (c_metrics["dropout"] == False)].copy()
@@ -782,6 +786,23 @@ def summarize_cohort_results(cohort, print_report=True):
     drop_rate = (drop_count / n) * 100 if n else 0.0
     cont_rate = (cont_count / n) * 100 if n else 0.0
 
+    # Phân loại tiến độ tốt nghiệp (đúng hạn, trễ hạn, sớm hạn)
+    on_time_df = grad_df[grad_df["graduation_timing"] == "on_time"]
+    late_df = grad_df[grad_df["graduation_timing"] == "late"]
+    early_df = grad_df[grad_df["graduation_timing"] == "early"]
+
+    on_time_count = len(on_time_df)
+    late_count = len(late_df)
+    early_count = len(early_df)
+
+    on_time_cohort_rate = (on_time_count / n) * 100 if n else 0.0
+    late_cohort_rate = (late_count / n) * 100 if n else 0.0
+    early_cohort_rate = (early_count / n) * 100 if n else 0.0
+
+    on_time_grad_rate = (on_time_count / grad_count) * 100 if grad_count else 0.0
+    late_grad_rate = (late_count / grad_count) * 100 if grad_count else 0.0
+    early_grad_rate = (early_count / grad_count) * 100 if grad_count else 0.0
+
     def ascii_bar(pct, length=25):
         filled = int(round(pct / 100 * length))
         return "█" * filled + "░" * (length - filled)
@@ -791,19 +812,27 @@ def summarize_cohort_results(cohort, print_report=True):
         "total_students": total_cohort_size,
         "tracked_students": n,
         "has_metrics": True,
+        "graduated_in_time": on_time_count,
+        "graduated_on_time": on_time_count,
+        "graduated_late": late_count,
+        "graduated_early": early_count,
+        "currently_studying": cont_count,
+        "dropout_count": drop_count,
         "graduated": {
             "count": grad_count,
             "rate": grad_rate,
+            "on_time_count": on_time_count,
+            "on_time_cohort_rate": on_time_cohort_rate,
+            "on_time_grad_rate": on_time_grad_rate,
+            "late_count": late_count,
+            "late_cohort_rate": late_cohort_rate,
+            "late_grad_rate": late_grad_rate,
+            "early_count": early_count,
+            "early_cohort_rate": early_cohort_rate,
+            "early_grad_rate": early_grad_rate,
             "by_classification": grad_df["degree_classification"].value_counts().to_dict(),
             "by_timing": grad_df["graduation_timing"].value_counts().to_dict(),
             "by_semester": grad_df["graduation_semester"].value_counts().to_dict(),
-        },
-        "dropout": {
-            "count": drop_count,
-            "rate": drop_rate,
-            "by_type": drop_df["dropout_type"].value_counts().to_dict(),
-            "by_reason": drop_df["dropout_reason"].value_counts().to_dict(),
-            "by_semester": drop_df["dropout_semester"].value_counts().to_dict(),
         },
         "continuing": {
             "count": cont_count,
@@ -811,8 +840,16 @@ def summarize_cohort_results(cohort, print_report=True):
             "avg_gpa": float(cont_df["gpa_4"].mean()) if cont_count else 0.0,
             "avg_passed_credits": float(cont_df["passed_credits"].mean()) if cont_count else 0.0,
             "avg_missing_courses": float(cont_df["missing_required_courses"].mean()) if cont_count else 0.0,
+            "missing_courses_distribution": cont_df["missing_required_courses"].value_counts().sort_index().to_dict() if cont_count else {},
             "english_pass_count": int((cont_df["english_pass"] == True).sum()),
             "thesis_eligible_count": int((cont_df["thesis_eligible"] == True).sum()),
+        },
+        "dropout": {
+            "count": drop_count,
+            "rate": drop_rate,
+            "by_type": drop_df["dropout_type"].value_counts().to_dict(),
+            "by_reason": drop_df["dropout_reason"].value_counts().to_dict(),
+            "by_semester": drop_df["dropout_semester"].value_counts().to_dict(),
         },
     }
 
@@ -822,15 +859,34 @@ def summarize_cohort_results(cohort, print_report=True):
         print(f"{'='*82}")
         print(f"Tổng số sinh viên theo dõi: {n} sinh viên\n")
         print(">>> CƠ CẤU TRẠNG THÁI HỌC VỤ <<<")
-        print(f"  1. Đã tốt nghiệp (Graduated)     : {grad_count:>4} SV ({grad_rate:5.1f}%) [{ascii_bar(grad_rate)}]")
-        print(f"  2. Thôi học / Bỏ học (Dropout)   : {drop_count:>4} SV ({drop_rate:5.1f}%) [{ascii_bar(drop_rate)}]")
-        print(f"  3. Đang tiếp tục học (In Study)  : {cont_count:>4} SV ({cont_rate:5.1f}%) [{ascii_bar(cont_rate)}]")
+        print(f"  1. Đã tốt nghiệp (Graduated)         : {grad_count:>4} SV ({grad_rate:5.1f}%) [{ascii_bar(grad_rate)}]")
+        print(f"     - Tốt nghiệp đúng hạn (In time)   : {on_time_count:>4} SV ({on_time_cohort_rate:5.1f}% khóa | {on_time_grad_rate:5.1f}% số tốt nghiệp)")
+        print(f"     - Tốt nghiệp trễ hạn (Late)       : {late_count:>4} SV ({late_cohort_rate:5.1f}% khóa | {late_grad_rate:5.1f}% số tốt nghiệp)")
+        if early_count > 0:
+            print(f"     - Tốt nghiệp sớm hạn (Early)      : {early_count:>4} SV ({early_cohort_rate:5.1f}% khóa | {early_grad_rate:5.1f}% số tốt nghiệp)")
+        print(f"  2. Đang tiếp tục học (Current Study) : {cont_count:>4} SV ({cont_rate:5.1f}%) [{ascii_bar(cont_rate)}]")
+        print(f"  3. Thôi học / Bỏ học (Dropout)       : {drop_count:>4} SV ({drop_rate:5.1f}%) [{ascii_bar(drop_rate)}]")
 
         # Chi tiết Tốt nghiệp
         print(f"\n{'-'*82}")
         print(f" CHI TIẾT 1: SINH VIÊN ĐÃ TỐT NGHIỆP ({grad_count} SV - {grad_rate:.1f}%) ".center(82, "-"))
         print(f"{'-'*82}")
         if grad_count > 0:
+            print("  * Phân bổ tiến độ thời gian tốt nghiệp:")
+            print(f"    - Đúng hạn (In time / On-time) : {on_time_count:>4} SV ({on_time_grad_rate:5.1f}% SV tốt nghiệp)")
+            print(f"    - Trễ hạn (Late)               : {late_count:>4} SV ({late_grad_rate:5.1f}% SV tốt nghiệp)")
+            if early_count > 0:
+                print(f"    - Sớm hạn (Early)              : {early_count:>4} SV ({early_grad_rate:5.1f}% SV tốt nghiệp)")
+
+            sem_grad = grad_df["graduation_semester"].value_counts().sort_index().to_dict()
+            sem_parts = []
+            for sem_k, sem_v in sem_grad.items():
+                sub_sem = grad_df[grad_df["graduation_semester"] == sem_k]
+                timings = sorted(sub_sem["graduation_timing"].unique())
+                t_lbl = "/".join(timings) if len(timings) else ""
+                sem_parts.append(f"{sem_k}: {sem_v} SV ({t_lbl})")
+            print(f"  * Phân bổ theo học kỳ tốt nghiệp: {', '.join(sem_parts)}")
+
             cls_map = {
                 "excellent": "Xuất sắc",
                 "very_good": "Giỏi",
@@ -844,17 +900,62 @@ def summarize_cohort_results(cohort, print_report=True):
             for cls_code, cnt in cls_counts.items():
                 lbl = cls_map.get(str(cls_code), str(cls_code))
                 print(f"    - {lbl:<25} ({cls_code}): {cnt:>4} SV ({(cnt/grad_count)*100:5.1f}%)")
-            sem_grad = grad_df["graduation_semester"].value_counts().to_dict()
-            sem_str = ", ".join(f"{k}: {v} SV" for k, v in sem_grad.items())
-            print(f"  * Học kỳ tốt nghiệp: {sem_str}")
-            on_time = (grad_df["graduation_timing"] == "on_time").sum()
-            print(f"  * Tiến độ thời gian: {on_time}/{grad_count} tốt nghiệp đúng hạn ({(on_time/grad_count)*100:.1f}%)")
         else:
             print("  [i] Khóa này chưa có sinh viên tốt nghiệp (chưa đến giai đoạn xét tốt nghiệp).")
 
+        # Chi tiết Đang tiếp tục học
+        print(f"\n{'-'*82}")
+        print(f" CHI TIẾT 2: SINH VIÊN ĐANG TIẾP TỤC HỌC ({cont_count} SV - {cont_rate:.1f}%) ".center(82, "-"))
+        print(f"{'-'*82}")
+        if cont_count > 0:
+            avg_gpa = cont_df["gpa_4"].mean()
+            avg_creds = cont_df["passed_credits"].mean()
+            eng_pass = (cont_df["english_pass"] == True).sum()
+            thesis_ready = (cont_df["thesis_eligible"] == True).sum()
+            avg_missing = cont_df["missing_required_courses"].mean()
+
+            print(f"  * Số sinh viên đang học hiện tại              : {cont_count:>4} SV ({(cont_count/n)*100:5.1f}% tổng khóa)")
+            print(f"  * Điểm trung bình tích lũy hiện tại (GPA 4.0) : {avg_gpa:.2f} / 4.00")
+            print(f"  * Số tín chỉ tích lũy trung bình              : {avg_creds:.1f} tín chỉ")
+            print(f"  * Đã đạt chuẩn tiếng Anh                      : {eng_pass:>4} SV ({(eng_pass/cont_count)*100:5.1f}%)")
+            print(f"  * Đạt điều kiện làm KLTN (>=12 ngày CTXH, TA) : {thesis_ready:>4} SV ({(thesis_ready/cont_count)*100:5.1f}%)")
+            print(f"  * Số môn bắt buộc còn thiếu trung bình        : {avg_missing:.1f} môn")
+
+            missing_dist = cont_df["missing_required_courses"].value_counts().sort_index()
+            print("  * Phân bổ số môn bắt buộc còn thiếu:")
+            for m_cnt, s_cnt in missing_dist.items():
+                print(f"    - Nợ {m_cnt:>2} môn                          : {s_cnt:>4} SV ({(s_cnt/cont_count)*100:5.1f}%)")
+
+            # Tiến độ thời gian đào tạo & cảnh báo hạn thôi học
+            start_sem = GENERATOR_CONFIG["student_progress"]["cohort_start_semester"].get(cohort_str.removeprefix("K"))
+            available_sems = get_available_semesters()
+            if start_sem and available_sems:
+                try:
+                    start_idx = semester_index(start_sem)
+                    latest_idx = semester_index(available_sems[-1])
+                    elapsed_semesters = latest_idx - start_idx + 1
+                    std_semesters = GENERATOR_CONFIG["student_progress"]["graduation"]["standard_semesters"]
+                    max_semesters = GENERATOR_CONFIG["student_progress"]["graduation"]["dismissal_after_semesters"]
+
+                    print("  * Tình trạng tiến độ đào tạo của khóa:")
+                    print(f"    - Đã trải qua: {elapsed_semesters} học kỳ ({start_sem} -> {available_sems[-1]})")
+                    if elapsed_semesters > std_semesters:
+                        late_terms = elapsed_semesters - std_semesters
+                        remaining_terms = max(0, max_semesters - elapsed_semesters)
+                        print(f"    - Tiến độ: Đã quá hạn chuẩn ({std_semesters} kỳ) -> Đang trễ {late_terms} học kỳ")
+                        print(f"    - Cảnh báo quy chế: Khung thời gian tối đa {max_semesters} kỳ (còn tối đa {remaining_terms} kỳ trước khi bị thôi học)")
+                    elif elapsed_semesters == std_semesters:
+                        print(f"    - Tiến độ: Đang ở học kỳ chuẩn cuối cùng ({std_semesters}/{std_semesters} kỳ)")
+                    else:
+                        print(f"    - Tiến độ: Đang trong lộ trình chuẩn ({elapsed_semesters}/{std_semesters} kỳ)")
+                except Exception:
+                    pass
+        else:
+            print("  [i] Không có sinh viên nào đang tiếp tục học trong khóa này.")
+
         # Chi tiết Thôi học
         print(f"\n{'-'*82}")
-        print(f" CHI TIẾT 2: SINH VIÊN THÔI HỌC / BỎ HỌC ({drop_count} SV - {drop_rate:.1f}%) ".center(82, "-"))
+        print(f" CHI TIẾT 3: SINH VIÊN THÔI HỌC / BỎ HỌC ({drop_count} SV - {drop_rate:.1f}%) ".center(82, "-"))
         print(f"{'-'*82}")
         if drop_count > 0:
             type_map = {
@@ -868,7 +969,8 @@ def summarize_cohort_results(cohort, print_report=True):
 
             reason_map = {
                 "low_pass_credits_two_consecutive_semesters": "Hai kỳ liên tiếp không đạt đủ số tín chỉ tối thiểu (<10 TC)",
-                "max_semesters_exceeded": "Vượt quá khung thời gian đào tạo tối đa quy định",
+                "max_semesters_exceeded": "Vượt quá khung thời gian đào tạo tối đa (quá 12 học kỳ, trễ quá 4 học kỳ)",
+                "overdue_more_than_two_years": "Vượt quá khung thời gian đào tạo tối đa (quá 12 học kỳ, trễ quá 4 học kỳ)",
                 "background": "Lý do cá nhân / Hoàn cảnh gia đình",
                 "academic": "Kết quả học tập không đáp ứng yêu cầu",
             }
@@ -882,25 +984,6 @@ def summarize_cohort_results(cohort, print_report=True):
             print(f"  * Phân bổ học kỳ thôi học: {sem_drop_str}")
         else:
             print("  [i] Không có sinh viên thôi học trong khóa này.")
-
-        # Chi tiết Đang tiếp tục học
-        print(f"\n{'-'*82}")
-        print(f" CHI TIẾT 3: SINH VIÊN ĐANG TIẾP TỤC HỌC ({cont_count} SV - {cont_rate:.1f}%) ".center(82, "-"))
-        print(f"{'-'*82}")
-        if cont_count > 0:
-            avg_gpa = cont_df["gpa_4"].mean()
-            avg_creds = cont_df["passed_credits"].mean()
-            eng_pass = (cont_df["english_pass"] == True).sum()
-            thesis_ready = (cont_df["thesis_eligible"] == True).sum()
-            avg_missing = cont_df["missing_required_courses"].mean()
-
-            print(f"  * Điểm trung bình tích lũy hiện tại (GPA 4.0): {avg_gpa:.2f} / 4.00")
-            print(f"  * Số tín chỉ tích lũy trung bình              : {avg_creds:.1f} tín chỉ")
-            print(f"  * Đã đạt chuẩn tiếng Anh                      : {eng_pass:>4} SV ({(eng_pass/cont_count)*100:5.1f}%)")
-            print(f"  * Đạt điều kiện làm KLTN (>=12 ngày CTXH, TA) : {thesis_ready:>4} SV ({(thesis_ready/cont_count)*100:5.1f}%)")
-            print(f"  * Số môn bắt buộc còn thiếu trung bình        : {avg_missing:.1f} môn")
-        else:
-            print("  [i] Không có sinh viên nào đang tiếp tục học.")
 
         print(f"{'='*82}\n")
 

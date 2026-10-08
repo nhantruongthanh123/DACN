@@ -1,0 +1,177 @@
+﻿class_id,course_code,course_name,semester,class_group,lecturer_id,lecturer_name
+HK172_CO4029_L01,CO4029,Đồ án Chuyên ngành,HK172,L01,1300746,Ngô Quốc An
+HK172_CO4337_L01,CO4337,Đồ án Tốt nghiệp (Khoa học Máy tính),HK172,L01,1300746,Ngô Quốc An
+HK172_CO4337_L02,CO4337,Đồ án Tốt nghiệp (Khoa học Máy tính),HK172,L02,1324503,Phạm Ngọc Nam
+HK172_CO4337_L03,CO4337,Đồ án Tốt nghiệp (Khoa học Máy tính),HK172,L03,1332422,Hồ Khánh Trinh
+HK172_SP1037_L01,SP1037,Tư tưởng Hồ Chí Minh,HK172,L01,1308665,Dương Đức Khôi
+HK172_SP1007_L01,SP1007,Pháp luật Việt Nam Đại cương,HK172,L01,1308665,Dương Đức Khôi
+HK172_SP1007_L02,SP1007,Pháp luật Việt Nam Đại cương,HK172,L02,1356179,Lê Thanh Hải
+HK172_SP1007_L03,SP1007,Pháp luật Việt Nam Đại cương,HK172,L03,1387855,Huỳnh Ngọc Khôi
+HK172_SP1007_L04,SP1007,Pháp luật Việt Nam Đại cương,HK172,L04,1395774,Đỗ Đức Khang
+HK172_SP1039_L01,SP1039,Lịch sử Đảng Cộng sản Việt Nam,HK172,L01,1308665,Dương Đức Khôi
+HK172_SP1039_L02,SP1039,Lịch sử Đảng Cộng sản Việt Nam,HK172,L02,1356179,Lê Thanh Hải
+HK172_SP1039_L03,SP1039,Lịch sử Đảng Cộng sản Việt Nam,HK172,L03,1387855,Huỳnh Ngọc Khôi
+HK172_SP1039_L04,SP1039,Lịch sử Đảng Cộng sản Việt Nam,HK172,L04,1395774,Đỗ Đức Khang
+HK172_SP1039_L05,SP1039,Lịch sử Đảng Cộng sản Việt Nam,HK172,L05,1362073,Dương Minh Tuấn
+HK172_CO2001_L01,CO2001,Kỹ năng Chuyên nghiệp cho Kỹ sư,HK172,L01,1300746,Ngô Quốc An
+HK172_CO2001_L02,CO2001,Kỹ năng Chuyên nghiệp cho Kỹ sư,HK172,L02,1324503,Phạm Ngọc Nam
+HK172_CO2001_L03,CO2001,Kỹ năng Chuyên nghiệp cho Kỹ sư,HK172,L03,1332422,Hồ Khánh Trinh
+HK172_CO2001_L04,CO2001,Kỹ năng Chuyên nghiệp cho Kỹ sư,HK172,L04,1340341,Bùi Hữu Trinh
+HK172_CO2001_L05,CO2001,Kỹ năng Chuyên nghiệp cho Kỹ sư,HK172,L05,1348260,Huỳnh Anh Nam
+HK172_CO3005_L01,CO3005,Nguyên lý Ngôn ngữ Lập trình,HK172,L01,1300746,Ngô Quốc An
+HK172_CO3005_L02,CO3005,Nguyên lý Ngôn ngữ Lập trình,HK172,L02,1324503,Phạm Ngọc Nam
+HK172_CO3005_L03,CO3005,Nguyên lý Ngôn ngữ Lập trình,HK172,L03,1332422,Hồ Khánh Trinh
+HK172_CO3005_L04,CO3005,Nguyên lý Ngôn ngữ Lập trình,HK172,L04,1340341,Bùi Hữu Trinh
+HK172_CO3005_L05,CO3005,Nguyên lý Ngôn ngữ Lập trình,HK172,L05,1348260,Huỳnh Anh Nam
+HK172_CO3335_L01,CO3335,Thực tập Ngoài trường,HK172,L01,1300746,Ngô Quốc An
+HK172_CO3335_L02,CO3335,Thực tập Ngoài trường,HK172,L02,1324503,Phạm Ngọc Nam
+HK172_CO3335_L03,CO3335,Thực tập Ngoài trường,HK172,L03,1332422,Hồ Khánh Trinh
+HK172_CO3335_L04,CO3335,Thực tập Ngoài trường,HK172,L04,1340341,Bùi Hữu Trinh
+HK172_CO3335_L05,CO3335,Thực tập Ngoài trường,HK172,L05,1348260,Huỳnh Anh Nam
+HK172_CO3107_L01,CO3107,Thực tập Đồ án môn học Đa ngành - Hướng Trí tuệ Nhân tạo,HK172,L01,1300746,Ngô Quốc An
+HK172_CO3107_L02,CO3107,Thực tập Đồ án môn học Đa ngành - Hướng Trí tuệ Nhân tạo,HK172,L02,1324503,Phạm Ngọc Nam
+HK172_CO3109_L01,CO3109,Thực tập Đồ án môn học Đa ngành - Hướng công Nghệ phần mềm,HK172,L01,1300746,Ngô Quốc An
+HK172_CO3109_L02,CO3109,Thực tập Đồ án môn học Đa ngành - Hướng công Nghệ phần mềm,HK172,L02,1324503,Phạm Ngọc Nam
+HK172_CO3111_L01,CO3111,Thực tập Đồ án môn học Đa ngành - hướng Hệ thống Thông tin,HK172,L01,1300746,Ngô Quốc An
+HK172_CO3111_L02,CO3111,Thực tập Đồ án môn học Đa ngành - hướng Hệ thống Thông tin,HK172,L02,1324503,Phạm Ngọc Nam
+HK172_CH1003_L01,CH1003,Hóa đại cương,HK172,L01,1316584,Lý Hoàng Duy
+HK172_CH1003_L02,CH1003,Hóa đại cương,HK172,L02,1364098,Bùi Anh Hiếu
+HK172_CO2013_L01,CO2013,Hệ cơ sở Dữ liệu,HK172,L01,1300746,Ngô Quốc An
+HK172_CO3093_L01,CO3093,Mạng máy tính,HK172,L01,1300746,Ngô Quốc An
+HK172_MT2013_L01,MT2013,Xác suất và Thống kê,HK172,L01,1316584,Lý Hoàng Duy
+HK172_MT2013_L02,MT2013,Xác suất và Thống kê,HK172,L02,1364098,Bùi Anh Hiếu
+HK172_MT2013_L03,MT2013,Xác suất và Thống kê,HK172,L03,1372017,Dương Hữu Bảo
+HK172_MT2013_L04,MT2013,Xác suất và Thống kê,HK172,L04,1359126,Bùi Quang Hà
+HK172_MT2013_L05,MT2013,Xác suất và Thống kê,HK172,L05,1398721,Hoàng Khánh Long
+HK172_LA1009_L01,LA1009,Anh văn 4,HK172,L01,1316584,Lý Hoàng Duy
+HK172_LA1009_L02,LA1009,Anh văn 4,HK172,L02,1364098,Bùi Anh Hiếu
+HK172_SP1033_L01,SP1033,Kinh tế Chính trị Mác - Lênin,HK172,L01,1308665,Dương Đức Khôi
+HK172_SP1033_L02,SP1033,Kinh tế Chính trị Mác - Lênin,HK172,L02,1356179,Lê Thanh Hải
+HK172_SP1033_L03,SP1033,Kinh tế Chính trị Mác - Lênin,HK172,L03,1387855,Huỳnh Ngọc Khôi
+HK172_SP1033_L04,SP1033,Kinh tế Chính trị Mác - Lênin,HK172,L04,1395774,Đỗ Đức Khang
+HK172_SP1033_L05,SP1033,Kinh tế Chính trị Mác - Lênin,HK172,L05,1362073,Dương Minh Tuấn
+HK172_CO2017_L01,CO2017,Hệ điều hành,HK172,L01,1300746,Ngô Quốc An
+HK172_CO2017_L02,CO2017,Hệ điều hành,HK172,L02,1324503,Phạm Ngọc Nam
+HK172_CO2017_L03,CO2017,Hệ điều hành,HK172,L03,1332422,Hồ Khánh Trinh
+HK172_CO2017_L04,CO2017,Hệ điều hành,HK172,L04,1340341,Bùi Hữu Trinh
+HK172_CO2017_L05,CO2017,Hệ điều hành,HK172,L05,1348260,Huỳnh Anh Nam
+HK172_CO2039_L01,CO2039,Lập trình Nâng cao,HK172,L01,1300746,Ngô Quốc An
+HK172_CO2039_L02,CO2039,Lập trình Nâng cao,HK172,L02,1324503,Phạm Ngọc Nam
+HK172_CO2039_L03,CO2039,Lập trình Nâng cao,HK172,L03,1332422,Hồ Khánh Trinh
+HK172_CO2039_L04,CO2039,Lập trình Nâng cao,HK172,L04,1340341,Bùi Hữu Trinh
+HK172_CO2039_L05,CO2039,Lập trình Nâng cao,HK172,L05,1348260,Huỳnh Anh Nam
+HK172_LA1005_L01,LA1005,Anh văn 2,HK172,L01,1316584,Lý Hoàng Duy
+HK172_PE1005_L01,PE1005,Giáo dục thể chất 2,HK172,L01,1300746,Ngô Quốc An
+HK172_PE1005_L02,PE1005,Giáo dục thể chất 2,HK172,L02,1324503,Phạm Ngọc Nam
+HK172_PE1005_L03,PE1005,Giáo dục thể chất 2,HK172,L03,1332422,Hồ Khánh Trinh
+HK172_PE1005_L04,PE1005,Giáo dục thể chất 2,HK172,L04,1340341,Bùi Hữu Trinh
+HK172_PE1005_L05,PE1005,Giáo dục thể chất 2,HK172,L05,1348260,Huỳnh Anh Nam
+HK172_PE1005_L06,PE1005,Giáo dục thể chất 2,HK172,L06,1379936,Lê Tuấn Nhi
+HK172_MT1005_L01,MT1005,Giải tích 2,HK172,L01,1316584,Lý Hoàng Duy
+HK172_MT1005_L02,MT1005,Giải tích 2,HK172,L02,1364098,Bùi Anh Hiếu
+HK172_MT1005_L03,MT1005,Giải tích 2,HK172,L03,1372017,Dương Hữu Bảo
+HK172_MT1005_L04,MT1005,Giải tích 2,HK172,L04,1359126,Bùi Quang Hà
+HK172_MT1005_L05,MT1005,Giải tích 2,HK172,L05,1398721,Hoàng Khánh Long
+HK172_MT1005_L06,MT1005,Giải tích 2,HK172,L06,1338316,Lê Khánh Yến
+HK172_MT1007_L01,MT1007,Đại số Tuyến tính,HK172,L01,1316584,Lý Hoàng Duy
+HK172_MT1007_L02,MT1007,Đại số Tuyến tính,HK172,L02,1364098,Bùi Anh Hiếu
+HK172_MT1007_L03,MT1007,Đại số Tuyến tính,HK172,L03,1372017,Dương Hữu Bảo
+HK172_MT1007_L04,MT1007,Đại số Tuyến tính,HK172,L04,1359126,Bùi Quang Hà
+HK172_MT1007_L05,MT1007,Đại số Tuyến tính,HK172,L05,1398721,Hoàng Khánh Long
+HK172_MT1007_L06,MT1007,Đại số Tuyến tính,HK172,L06,1338316,Lê Khánh Yến
+HK172_CO1007_L01,CO1007,Cấu trúc Rời rạc cho Khoa học Máy tính,HK172,L01,1300746,Ngô Quốc An
+HK172_CO1007_L02,CO1007,Cấu trúc Rời rạc cho Khoa học Máy tính,HK172,L02,1324503,Phạm Ngọc Nam
+HK172_CO1007_L03,CO1007,Cấu trúc Rời rạc cho Khoa học Máy tính,HK172,L03,1332422,Hồ Khánh Trinh
+HK172_CO1007_L04,CO1007,Cấu trúc Rời rạc cho Khoa học Máy tính,HK172,L04,1340341,Bùi Hữu Trinh
+HK172_CO1007_L05,CO1007,Cấu trúc Rời rạc cho Khoa học Máy tính,HK172,L05,1348260,Huỳnh Anh Nam
+HK172_CO1007_L06,CO1007,Cấu trúc Rời rạc cho Khoa học Máy tính,HK172,L06,1379936,Lê Tuấn Nhi
+HK172_CO1027_L01,CO1027,Kỹ thuật Lập trình,HK172,L01,1300746,Ngô Quốc An
+HK172_CO1027_L02,CO1027,Kỹ thuật Lập trình,HK172,L02,1324503,Phạm Ngọc Nam
+HK172_CO1027_L03,CO1027,Kỹ thuật Lập trình,HK172,L03,1332422,Hồ Khánh Trinh
+HK172_CO1027_L04,CO1027,Kỹ thuật Lập trình,HK172,L04,1340341,Bùi Hữu Trinh
+HK172_CO1027_L05,CO1027,Kỹ thuật Lập trình,HK172,L05,1348260,Huỳnh Anh Nam
+HK172_CO1027_L06,CO1027,Kỹ thuật Lập trình,HK172,L06,1379936,Lê Tuấn Nhi
+HK172_PH1007_L01,PH1007,Thí nghiệm Vật lý,HK172,L01,1316584,Lý Hoàng Duy
+HK172_PH1007_L02,PH1007,Thí nghiệm Vật lý,HK172,L02,1364098,Bùi Anh Hiếu
+HK172_PH1007_L03,PH1007,Thí nghiệm Vật lý,HK172,L03,1372017,Dương Hữu Bảo
+HK172_PH1007_L04,PH1007,Thí nghiệm Vật lý,HK172,L04,1359126,Bùi Quang Hà
+HK172_PH1007_L05,PH1007,Thí nghiệm Vật lý,HK172,L05,1398721,Hoàng Khánh Long
+HK172_PH1007_L06,PH1007,Thí nghiệm Vật lý,HK172,L06,1338316,Lê Khánh Yến
+HK172_MI1003_L01,MI1003,Giáo dục Quốc phòng,HK172,L01,1308665,Dương Đức Khôi
+HK172_MI1003_L02,MI1003,Giáo dục Quốc phòng,HK172,L02,1356179,Lê Thanh Hải
+HK172_MI1003_L03,MI1003,Giáo dục Quốc phòng,HK172,L03,1387855,Huỳnh Ngọc Khôi
+HK172_MI1003_L04,MI1003,Giáo dục Quốc phòng,HK172,L04,1395774,Đỗ Đức Khang
+HK172_MI1003_L05,MI1003,Giáo dục Quốc phòng,HK172,L05,1362073,Dương Minh Tuấn
+HK172_MI1003_L06,MI1003,Giáo dục Quốc phòng,HK172,L06,1369992,Lê Quang Hiếu
+HK172_IM1013_L01,IM1013,Kinh tế học Đại cương,HK172,L01,1300746,Ngô Quốc An
+HK172_IM1023_L01,IM1023,Quản lý Sản xuất cho Kỹ sư,HK172,L01,1300746,Ngô Quốc An
+HK172_IM1023_L02,IM1023,Quản lý Sản xuất cho Kỹ sư,HK172,L02,1324503,Phạm Ngọc Nam
+HK172_IM1025_L01,IM1025,Quản lý Dự án cho Kỹ sư,HK172,L01,1300746,Ngô Quốc An
+HK172_IM1027_L01,IM1027,Kinh tế Kỹ thuật,HK172,L01,1300746,Ngô Quốc An
+HK172_IM3001_L01,IM3001,Quản trị Kinh doanh cho Kỹ sư,HK172,L01,1300746,Ngô Quốc An
+HK172_IM3001_L02,IM3001,Quản trị Kinh doanh cho Kỹ sư,HK172,L02,1324503,Phạm Ngọc Nam
+HK172_IM1011_L01,IM1011,Máy tính trong Kinh doanh,HK172,L01,1300746,Ngô Quốc An
+HK172_IM1011_L02,IM1011,Máy tính trong Kinh doanh,HK172,L02,1324503,Phạm Ngọc Nam
+HK172_IM1021_L01,IM1021,Khởi nghiệp,HK172,L01,1300746,Ngô Quốc An
+HK172_IM1021_L02,IM1021,Khởi nghiệp,HK172,L02,1324503,Phạm Ngọc Nam
+HK172_IM1019_L01,IM1019,Tiếp thị căn bản,HK172,L01,1300746,Ngô Quốc An
+HK172_IM1019_L02,IM1019,Tiếp thị căn bản,HK172,L02,1324503,Phạm Ngọc Nam
+HK172_IM3047_L01,IM3047,Giao tiếp trong kinh doanh,HK172,L01,1300746,Ngô Quốc An
+HK172_IM3047_L02,IM3047,Giao tiếp trong kinh doanh,HK172,L02,1324503,Phạm Ngọc Nam
+HK172_ME4625_L01,ME4625,Kỹ năng lãnh đạo,HK172,L01,1300746,Ngô Quốc An
+HK172_ME4625_L02,ME4625,Kỹ năng lãnh đạo,HK172,L02,1324503,Phạm Ngọc Nam
+HK172_CH4079_L01,CH4079,Hoá học xanh,HK172,L01,1316584,Lý Hoàng Duy
+HK172_CH4079_L02,CH4079,Hoá học xanh,HK172,L02,1364098,Bùi Anh Hiếu
+HK172_E1013_L01,E1013,Khoa học trái đất,HK172,L01,1300746,Ngô Quốc An
+HK172_E1013_L02,E1013,Khoa học trái đất,HK172,L02,1324503,Phạm Ngọc Nam
+HK172_CO3011_L01,CO3011,Quản lý Dự án Phần mềm,HK172,L01,1300746,Ngô Quốc An
+HK172_CO3013_L01,CO3013,Xây dựng Chương trình Dịch,HK172,L01,1300746,Ngô Quốc An
+HK172_CO3015_L01,CO3015,Kiểm tra Phần mềm,HK172,L01,1300746,Ngô Quốc An
+HK172_CO3017_L01,CO3017,Kiến trúc Phần mềm,HK172,L01,1300746,Ngô Quốc An
+HK172_CO3021_L01,CO3021,Hệ Quản trị Cơ sở Dữ Liệu,HK172,L01,1300746,Ngô Quốc An
+HK172_CO3023_L01,CO3023,Cơ sở Dữ liệu Phân tán và Hướng đối tượng,HK172,L01,1300746,Ngô Quốc An
+HK172_CO3027_L01,CO3027,Thương mại Điện tử,HK172,L01,1300746,Ngô Quốc An
+HK172_CO3029_L01,CO3029,Khai phá Dữ liệu,HK172,L01,1300746,Ngô Quốc An
+HK172_CO3031_L01,CO3031,Phân tích và Thiết kế Giải Thuật,HK172,L01,1300746,Ngô Quốc An
+HK172_CO3033_L01,CO3033,Bảo mật Hệ thống Thông tin,HK172,L01,1300746,Ngô Quốc An
+HK172_CO3035_L01,CO3035,Hệ thời gian thực,HK172,L01,1300746,Ngô Quốc An
+HK172_CO3037_L01,CO3037,Phát triển Ứng dụng Internet of Things,HK172,L01,1300746,Ngô Quốc An
+HK172_CO3041_L01,CO3041,Hệ thống Thông minh,HK172,L01,1300746,Ngô Quốc An
+HK172_CO3043_L01,CO3043,Phát triển Ứng dụng trên Thiết bị Di động,HK172,L01,1300746,Ngô Quốc An
+HK172_CO3045_L01,CO3045,Lập trình Game,HK172,L01,1300746,Ngô Quốc An
+HK172_CO3047_L01,CO3047,Mạng máy tính nâng cao,HK172,L01,1300746,Ngô Quốc An
+HK172_CO3049_L01,CO3049,Lập trình Web,HK172,L01,1300746,Ngô Quốc An
+HK172_CO3051_L01,CO3051,Hệ thống thiết bị di động,HK172,L01,1300746,Ngô Quốc An
+HK172_CO3057_L01,CO3057,Xử lý Ảnh số và Thị giác Máy tính,HK172,L01,1300746,Ngô Quốc An
+HK172_CO3059_L01,CO3059,Đồ họa Máy tính,HK172,L01,1300746,Ngô Quốc An
+HK172_CO3061_L01,CO3061,Nhập môn Trí tuệ Nhân tạo,HK172,L01,1300746,Ngô Quốc An
+HK172_CO3065_L01,CO3065,Công nghệ Phần mềm Nâng cao,HK172,L01,1300746,Ngô Quốc An
+HK172_CO3067_L01,CO3067,Tính toán Song song,HK172,L01,1300746,Ngô Quốc An
+HK172_CO3069_L01,CO3069,Mật mã và An ninh mạng,HK172,L01,1300746,Ngô Quốc An
+HK172_CO3071_L01,CO3071,Hệ phân bố,HK172,L01,1300746,Ngô Quốc An
+HK172_CO3083_L01,CO3083,Mật mã học và Mã hóa Thông tin,HK172,L01,1300746,Ngô Quốc An
+HK172_CO3085_L01,CO3085,Xử lý Ngôn ngữ Tự nhiên,HK172,L01,1300746,Ngô Quốc An
+HK172_CO3089_L01,CO3089,Những Chủ đề Nâng cao trong Khoa học Máy tính,HK172,L01,1300746,Ngô Quốc An
+HK172_CO3115_L01,CO3115,Phân tích và Thiết kế Hệ thống,HK172,L01,1300746,Ngô Quốc An
+HK172_CO3117_L01,CO3117,Học máy,HK172,L01,1300746,Ngô Quốc An
+HK172_CO3129_L01,CO3129,Bảo mật Phần mềm,HK172,L01,1300746,Ngô Quốc An
+HK172_CO3131_L01,CO3131,Công nghệ Phần mềm thế hệ mới,HK172,L01,1300746,Ngô Quốc An
+HK172_CO3133_L01,CO3133,Học sâu và Ứng dụng,HK172,L01,1300746,Ngô Quốc An
+HK172_CO3135_L01,CO3135,Lập trình cho Trí tuệ nhân tạo và Khoa học dữ liệu,HK172,L01,1300746,Ngô Quốc An
+HK172_CO3137_L01,CO3137,Dữ liệu lớn,HK172,L01,1300746,Ngô Quốc An
+HK172_CO3139_L01,CO3139,Chuyển đổi số,HK172,L01,1300746,Ngô Quốc An
+HK172_CO3151_L01,CO3151,Quản trị mạng,HK172,L01,1300746,Ngô Quốc An
+HK172_CO3153_L01,CO3153,Đánh giá an toàn mạng máy tính,HK172,L01,1300746,Ngô Quốc An
+HK172_CO4025_L01,CO4025,Mạng xã hội và Thông tin,HK172,L01,1300746,Ngô Quốc An
+HK172_CO4031_L01,CO4031,Kho dữ Liệu và Hệ hỗ trợ Quyết định,HK172,L01,1300746,Ngô Quốc An
+HK172_CO4033_L01,CO4033,Phân tích Dữ liệu lớn và Trí tuệ Kinh doanh,HK172,L01,1300746,Ngô Quốc An
+HK172_CO4035_L01,CO4035,Hệ hoạch Định tài Nguyên tổ chức,HK172,L01,1300746,Ngô Quốc An
+HK172_CO4037_L01,CO4037,Hệ thống thông tin quản lý,HK172,L01,1300746,Ngô Quốc An
+HK172_CO4039_L01,CO4039,Bảo mật sinh trắc,HK172,L01,1300746,Ngô Quốc An
+HK172_CO2007_L01,CO2007,Kiến trúc Máy tính,HK172,L01,1300746,Ngô Quốc An
+HK172_LA1003_L01,LA1003,Anh văn 1,HK172,L01,1316584,Lý Hoàng Duy
+HK172_CO1005_L01,CO1005,Nhập môn Điện toán,HK172,L01,1300746,Ngô Quốc An
+HK172_PE1003_L01,PE1003,Giáo dục thể chất 1,HK172,L01,1300746,Ngô Quốc An
+HK172_CO1023_L01,CO1023,Hệ thống số,HK172,L01,1300746,Ngô Quốc An
+HK172_SP1035_L01,SP1035,Chủ nghĩa Xã hội Khoa học,HK172,L01,1308665,Dương Đức Khôi
+HK172_SP1031_L01,SP1031,Triết học Mác - Lênin,HK172,L01,1308665,Dương Đức Khôi

@@ -34,6 +34,9 @@ ACCELERATION_BASE_SCORE = 8.0
 ACCELERATION_PROBABILITY = 0.35
 FREE_CREDIT_LIMIT = 9
 GROUP_C_CREDIT_LIMIT = 15
+STANDARD_SEMESTERS = 8
+MAX_LATE_SEMESTERS = 4
+DISMISSAL_AFTER_SEMESTERS = 12
 
 _FREE_COURSE_CODES = None
 _GROUP_C_COURSE_CODES = None
@@ -85,10 +88,7 @@ PROFILE_FIELDS = (
 )
 
 
-def load_generator_config():
-    with CONFIG_FILE.open(encoding="utf-8") as config_file:
-        config = json.load(config_file)
-
+def validate_generator_config(config):
     def validate_distribution(name, values):
         if (
             not values
@@ -206,6 +206,7 @@ def load_generator_config():
     graduation = progress["graduation"]
     if (
         graduation["standard_semesters"] <= 0
+        or graduation.get("max_late_semesters", 1) <= 0
         or graduation["dismissal_after_semesters"]
         < graduation["standard_semesters"]
         or graduation["minimum_passed_credits_per_semester"] < 0
@@ -216,6 +217,22 @@ def load_generator_config():
         or not graduation["graduation_project_codes"]
     ):
         raise ValueError("Invalid graduation progress configuration")
+    if "electives" in progress:
+        electives = progress["electives"]
+        if (
+            electives.get("free_credit_limit", 0) < 0
+            or electives.get("group_c_credit_limit", 0) < 0
+        ):
+            raise ValueError("Invalid electives configuration")
+    if "enrollment_policy" in progress:
+        policy = progress["enrollment_policy"]
+        if (
+            policy.get("optional_threshold", 0) < 0
+            or not 0 <= policy.get("optional_16_credit_probability", 0) <= 1
+            or policy.get("acceleration_base_score", 0) < 0
+            or not 0 <= policy.get("acceleration_probability", 0) <= 1
+        ):
+            raise ValueError("Invalid enrollment policy configuration")
 
     grade_scale = config["grade_scale"]
     if (
@@ -229,6 +246,13 @@ def load_generator_config():
     ):
         raise ValueError("grade_scale must continuously cover the configured score range")
     return config
+
+
+def load_generator_config(config_file=None):
+    target = Path(config_file) if config_file else CONFIG_FILE
+    with target.open(encoding="utf-8") as file_obj:
+        config = json.load(file_obj)
+    return validate_generator_config(config)
 
 
 GENERATOR_CONFIG = load_generator_config()
@@ -801,6 +825,93 @@ def semester_index(semester_code):
     return (year - 23) * 2 + term
 
 
+def semester_from_index(idx):
+    """Convert integer semester index back to canonical semester code, e.g. -19 -> 'HK131'."""
+    year = 23 + (idx - 1) // 2
+    term = 1 if (idx % 2 != 0) else 2
+    return f"HK{year}{term}"
+
+
+def get_late_semesters_count(student_id, semester_code, config=None):
+    """Calculate the number of late semesters for a student at a given semester.
+
+    Returns:
+        int: Number of late semesters (0 if on-time or early, 1-4 if within late allowance, >4 if overdue).
+    """
+    config = config or GENERATOR_CONFIG
+    progress_config = config["student_progress"]
+    cohort_start = progress_config["cohort_start_semester"].get(str(student_id)[:2])
+    if cohort_start is None:
+        return 0
+    elapsed = semester_index(semester_code) - semester_index(cohort_start)
+    standard_terms = progress_config["graduation"].get(
+        "standard_semesters", STANDARD_SEMESTERS
+    )
+    return max(0, elapsed - standard_terms + 1)
+
+
+def is_late_semester(student_id, semester_code, config=None):
+    """Check if student is in an allowed late semester (1 to max_late_semesters late)."""
+    late_count = get_late_semesters_count(student_id, semester_code, config)
+    config = config or GENERATOR_CONFIG
+    max_late = config.get("student_progress", {}).get("graduation", {}).get(
+        "max_late_semesters", MAX_LATE_SEMESTERS
+    )
+    return 1 <= late_count <= max_late
+
+
+def is_academic_dismissal(student_id, semester_code, config=None):
+    """Check if student is dismissed for exceeding maximum allowed study duration.
+
+    Under HCMUT academic regulations:
+    - Standard curriculum duration: 8 semesters (4 years).
+    - Maximum extension allowed: 4 late semesters (2 years).
+    - Total maximum study duration: 12 semesters.
+    After 12 semesters (i.e. at or after the 13th semester from cohort start),
+    students who have not graduated are subjected to academic dismissal (buộc thôi học).
+    """
+    config = config or GENERATOR_CONFIG
+    progress_config = config["student_progress"]
+    cohort_start = progress_config["cohort_start_semester"].get(str(student_id)[:2])
+    if cohort_start is None:
+        return False
+    elapsed = semester_index(semester_code) - semester_index(cohort_start)
+    grad_config = progress_config.get("graduation", {})
+    dismissal_threshold = grad_config.get(
+        "dismissal_after_semesters",
+        grad_config.get("standard_semesters", STANDARD_SEMESTERS)
+        + grad_config.get("max_late_semesters", MAX_LATE_SEMESTERS),
+    )
+    return elapsed >= dismissal_threshold
+
+
+def get_academic_dismissal_semester(student_id, config=None):
+    """Return the semester code where dismissal triggers (the 13th semester, exceeding 12 semesters)."""
+    config = config or GENERATOR_CONFIG
+    progress_config = config["student_progress"]
+    cohort_start = progress_config["cohort_start_semester"].get(str(student_id)[:2])
+    if cohort_start is None:
+        return None
+    start_idx = semester_index(cohort_start)
+    grad_config = progress_config.get("graduation", {})
+    dismissal_threshold = grad_config.get(
+        "dismissal_after_semesters",
+        grad_config.get("standard_semesters", STANDARD_SEMESTERS)
+        + grad_config.get("max_late_semesters", MAX_LATE_SEMESTERS),
+    )
+    return semester_from_index(start_idx + dismissal_threshold)
+
+
+def academic_dismissal_semesters(student_id, semesters, config=None):
+    """Return the set of semesters from the list that fall under academic dismissal for the student."""
+    return {
+        semester
+        for semester in semesters
+        if is_academic_dismissal(student_id, semester, config)
+    }
+
+
+
 def score_course_components(
     student,
     course_code,
@@ -986,23 +1097,33 @@ def get_department(course_code):
     return catalog_department(course_code)
 
 
-def wants_acceleration(student_id, base_score):
-    if float(base_score) < ACCELERATION_BASE_SCORE:
+def wants_acceleration(student_id, base_score, config=None):
+    config = config or GENERATOR_CONFIG
+    policy = config.get("student_progress", {}).get("enrollment_policy", {})
+    min_base_score = policy.get("acceleration_base_score", ACCELERATION_BASE_SCORE)
+    prob = policy.get("acceleration_probability", ACCELERATION_PROBABILITY)
+    if float(base_score) < min_base_score:
         return False
     digest = hashlib.sha256(
         f"{student_id}:acceleration".encode("utf-8")
     ).hexdigest()
-    return int(digest[:8], 16) / 0xFFFFFFFF < ACCELERATION_PROBABILITY
+    return int(digest[:8], 16) / 0xFFFFFFFF < prob
 
 
-def allows_optional_course_at_16(student_id):
+def allows_optional_course_at_16(student_id, config=None):
+    config = config or GENERATOR_CONFIG
+    policy = config.get("student_progress", {}).get("enrollment_policy", {})
+    prob = policy.get("optional_16_credit_probability", OPTIONAL_16_CREDIT_PROBABILITY)
     digest = hashlib.sha256(
         f"{student_id}:optional-at-16".encode("utf-8")
     ).hexdigest()
-    return int(digest[:8], 16) / 0xFFFFFFFF < OPTIONAL_16_CREDIT_PROBABILITY
+    return int(digest[:8], 16) / 0xFFFFFFFF < prob
 
 
-def calculate_eligibility(students, history, credits, prerequisites):
+def calculate_eligibility(students, history, credits, prerequisites, config=None):
+    config = config or GENERATOR_CONFIG
+    policy = config.get("student_progress", {}).get("enrollment_policy", {})
+    optional_threshold = policy.get("optional_threshold", OPTIONAL_ENROLLMENT_THRESHOLD)
     passed = (
         history[history["status"].astype(str).str.casefold() == "pass"]
         .groupby("student_id")["course_code"].apply(set).to_dict()
@@ -1044,11 +1165,12 @@ def calculate_eligibility(students, history, credits, prerequisites):
         acceleration = wants_acceleration(
             student.student_id,
             student.base_score,
+            config,
         )
         can_fill_gap = (
             registered_credits[student_id] < TUITION_BASELINE_CREDITS
             and (
-                registered_credits[student_id] <= OPTIONAL_ENROLLMENT_THRESHOLD
+                registered_credits[student_id] <= optional_threshold
                 or acceleration
             )
         )
@@ -1109,6 +1231,12 @@ def calculate_eligibility_for_schedule(
     config = config or GENERATOR_CONFIG
     if semester_code is None:
         raise ValueError("semester_code is required to evaluate student eligibility")
+    progress_config = config.get("student_progress", {})
+    electives_config = progress_config.get("electives", {})
+    free_credit_limit = electives_config.get("free_credit_limit", FREE_CREDIT_LIMIT)
+    group_c_credit_limit = electives_config.get("group_c_credit_limit", GROUP_C_CREDIT_LIMIT)
+    policy_config = progress_config.get("enrollment_policy", {})
+    optional_threshold = policy_config.get("optional_threshold", OPTIONAL_ENROLLMENT_THRESHOLD)
     scheduled_courses = {
         str(cohort)[:2]: courses for cohort, courses in scheduled_courses.items()
     }
@@ -1159,15 +1287,7 @@ def calculate_eligibility_for_schedule(
             dropout_semester
         ):
             continue
-        progress_config = config["student_progress"]
-        cohort_start = progress_config["cohort_start_semester"].get(
-            str(student_id)[:2]
-        )
-        if cohort_start is not None and semester_index(
-            semester_code
-        ) - semester_index(cohort_start) >= (
-            progress_config["graduation"]["dismissal_after_semesters"]
-        ):
+        if is_academic_dismissal(student_id, semester_code, config):
             eligibility[student_id] = []
             continue
         if _is_academic_suspension_semester(
@@ -1292,9 +1412,9 @@ def calculate_eligibility_for_schedule(
         for group_name, target in credit_targets.items():
             candidates = elective_groups.get(group_name, [])
             current_all = passed_courses | set(selected)
-            if group_name == "FREE" and sum(credits.get(code, 0) for code in current_all if code in free_codes) >= FREE_CREDIT_LIMIT:
+            if group_name == "FREE" and sum(credits.get(code, 0) for code in current_all if code in free_codes) >= free_credit_limit:
                 continue
-            if group_name == "GROUP_C" and sum(credits.get(code, 0) for code in current_all if code in group_c_codes) >= GROUP_C_CREDIT_LIMIT:
+            if group_name == "GROUP_C" and sum(credits.get(code, 0) for code in current_all if code in group_c_codes) >= group_c_credit_limit:
                 continue
             completed = sum(
                 credits[code]
@@ -1306,9 +1426,9 @@ def calculate_eligibility_for_schedule(
                     break
                 if code in passed_courses or code in selected:
                     continue
-                if group_name == "FREE" and sum(credits.get(c, 0) for c in (passed_courses | set(selected)) if c in get_free_course_codes()) >= FREE_CREDIT_LIMIT:
+                if group_name == "FREE" and sum(credits.get(c, 0) for c in (passed_courses | set(selected)) if c in get_free_course_codes()) >= free_credit_limit:
                     break
-                if group_name == "GROUP_C" and sum(credits.get(c, 0) for c in (passed_courses | set(selected)) if c in get_group_c_course_codes()) >= GROUP_C_CREDIT_LIMIT:
+                if group_name == "GROUP_C" and sum(credits.get(c, 0) for c in (passed_courses | set(selected)) if c in get_group_c_course_codes()) >= group_c_credit_limit:
                     break
                 if not all(
                     prerequisite in passed_courses or prerequisite in exempted_english
@@ -1323,15 +1443,16 @@ def calculate_eligibility_for_schedule(
         acceleration = wants_acceleration(
             student.student_id,
             student.base_score,
+            config,
         )
         optional_at_16 = (
             registered_credits == 16
-            and allows_optional_course_at_16(student.student_id)
+            and allows_optional_course_at_16(student.student_id, config)
         )
         can_fill_gap = (
             registered_credits < TUITION_BASELINE_CREDITS
             and (
-                registered_credits <= OPTIONAL_ENROLLMENT_THRESHOLD
+                registered_credits <= optional_threshold
                 or optional_at_16
                 or acceleration
             )
@@ -1406,7 +1527,7 @@ def calculate_eligibility_for_schedule(
             peer_round = 0
             max_peer_courses = (
                 None
-                if acceleration or registered_credits <= OPTIONAL_ENROLLMENT_THRESHOLD
+                if acceleration or registered_credits <= optional_threshold
                 else 1
             )
             optional_credit_limit = (
@@ -1434,8 +1555,8 @@ def calculate_eligibility_for_schedule(
                     for source_group, code in peer_stage
                     if code not in passed_courses
                     and code not in selected
-                    and not (source_group == "FREE" and completed_free >= FREE_CREDIT_LIMIT)
-                    and not (source_group == "GROUP_C" and completed_group_c >= GROUP_C_CREDIT_LIMIT)
+                    and not (source_group == "FREE" and completed_free >= free_credit_limit)
+                    and not (source_group == "GROUP_C" and completed_group_c >= group_c_credit_limit)
                     and all(
                         prerequisite in passed_courses or prerequisite in exempted_english
                         for prerequisite in tq_rules.get(code, [])

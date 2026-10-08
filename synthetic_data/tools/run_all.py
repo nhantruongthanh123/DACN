@@ -24,6 +24,10 @@ scripts = [
     "enrollments/generate_enrollment_hk161.py",
     "classes/generate_class_hk162.py",
     "enrollments/generate_enrollment_hk162.py",
+    "classes/generate_class_hk171.py",
+    "enrollments/generate_enrollment_hk171.py",
+    "classes/generate_class_hk172.py",
+    "enrollments/generate_enrollment_hk172.py",
     "../tools/generate_academic_metrics.py",
 ]
 

@@ -12,9 +12,6 @@ HK162_SP1039_L04,SP1039,Lịch sử Đảng Cộng sản Việt Nam,HK162,L04,13
 HK162_SP1039_L05,SP1039,Lịch sử Đảng Cộng sản Việt Nam,HK162,L05,1362073,Dương Minh Tuấn
 HK162_CO2001_L01,CO2001,Kỹ năng Chuyên nghiệp cho Kỹ sư,HK162,L01,1300746,Ngô Quốc An
 HK162_CO2001_L02,CO2001,Kỹ năng Chuyên nghiệp cho Kỹ sư,HK162,L02,1324503,Phạm Ngọc Nam
-HK162_CO2001_L03,CO2001,Kỹ năng Chuyên nghiệp cho Kỹ sư,HK162,L03,1332422,Hồ Khánh Trinh
-HK162_CO2001_L04,CO2001,Kỹ năng Chuyên nghiệp cho Kỹ sư,HK162,L04,1340341,Bùi Hữu Trinh
-HK162_CO2001_L05,CO2001,Kỹ năng Chuyên nghiệp cho Kỹ sư,HK162,L05,1348260,Huỳnh Anh Nam
 HK162_CO3005_L01,CO3005,Nguyên lý Ngôn ngữ Lập trình,HK162,L01,1300746,Ngô Quốc An
 HK162_CO3005_L02,CO3005,Nguyên lý Ngôn ngữ Lập trình,HK162,L02,1324503,Phạm Ngọc Nam
 HK162_CO3005_L03,CO3005,Nguyên lý Ngôn ngữ Lập trình,HK162,L03,1332422,Hồ Khánh Trinh
@@ -98,10 +95,14 @@ HK162_IM1025_L01,IM1025,Quản lý Dự án cho Kỹ sư,HK162,L01,1300746,Ngô 
 HK162_IM1027_L01,IM1027,Kinh tế Kỹ thuật,HK162,L01,1300746,Ngô Quốc An
 HK162_IM3001_L01,IM3001,Quản trị Kinh doanh cho Kỹ sư,HK162,L01,1300746,Ngô Quốc An
 HK162_IM1011_L01,IM1011,Máy tính trong Kinh doanh,HK162,L01,1300746,Ngô Quốc An
+HK162_IM1011_L02,IM1011,Máy tính trong Kinh doanh,HK162,L02,1324503,Phạm Ngọc Nam
 HK162_IM1021_L01,IM1021,Khởi nghiệp,HK162,L01,1300746,Ngô Quốc An
 HK162_IM1019_L01,IM1019,Tiếp thị căn bản,HK162,L01,1300746,Ngô Quốc An
+HK162_IM1019_L02,IM1019,Tiếp thị căn bản,HK162,L02,1324503,Phạm Ngọc Nam
 HK162_IM3047_L01,IM3047,Giao tiếp trong kinh doanh,HK162,L01,1300746,Ngô Quốc An
+HK162_IM3047_L02,IM3047,Giao tiếp trong kinh doanh,HK162,L02,1324503,Phạm Ngọc Nam
 HK162_ME4625_L01,ME4625,Kỹ năng lãnh đạo,HK162,L01,1300746,Ngô Quốc An
+HK162_ME4625_L02,ME4625,Kỹ năng lãnh đạo,HK162,L02,1324503,Phạm Ngọc Nam
 HK162_CH4079_L01,CH4079,Hoá học xanh,HK162,L01,1316584,Lý Hoàng Duy
 HK162_E1013_L01,E1013,Khoa học trái đất,HK162,L01,1300746,Ngô Quốc An
 HK162_CO3011_L01,CO3011,Quản lý Dự án Phần mềm,HK162,L01,1300746,Ngô Quốc An

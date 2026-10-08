@@ -9,7 +9,13 @@ RULES_DIR = Path(__file__).resolve().parents[1] / "rules"
 sys.path.insert(0, str(RULES_DIR))
 
 from academic_rules import (
+    DISMISSAL_AFTER_SEMESTERS,
+    FREE_CREDIT_LIMIT,
     GENERATOR_CONFIG,
+    GROUP_C_CREDIT_LIMIT,
+    MAX_LATE_SEMESTERS,
+    STANDARD_SEMESTERS,
+    academic_dismissal_semesters,
     academic_suspension_semesters,
     add_gpa_summaries,
     allocate_course_rosters,
@@ -20,9 +26,16 @@ from academic_rules import (
     filter_students_from_2013,
     generate_observed_score,
     generate_student_profile,
+    get_academic_dismissal_semester,
     get_exempted_english_courses,
+    get_late_semesters_count,
+    is_academic_dismissal,
+    is_late_semester,
+    semester_from_index,
     semester_index,
     students_by_course_from_eligibility,
+    validate_generator_config,
+    wants_acceleration,
 )
 
 
@@ -487,6 +500,152 @@ class AcademicScoreRulesTests(unittest.TestCase):
             self.assertNotIn(c, selected_both)
         # Other course type (EXTRA01) should be selected instead!
         self.assertIn("EXTRA01", selected_both)
+
+    def test_constants_and_semester_from_index(self):
+        self.assertEqual(STANDARD_SEMESTERS, 8)
+        self.assertEqual(MAX_LATE_SEMESTERS, 4)
+        self.assertEqual(DISMISSAL_AFTER_SEMESTERS, 12)
+
+        self.assertEqual(semester_from_index(-19), "HK131")
+        self.assertEqual(semester_from_index(-12), "HK162")
+        self.assertEqual(semester_from_index(-7), "HK191")
+
+        for year in range(13, 26):
+            for term in (1, 2):
+                code = f"HK{year}{term}"
+                self.assertEqual(semester_from_index(semester_index(code)), code)
+
+    def test_late_semesters_count(self):
+        # Student K13 starts at HK131
+        student_id = "1310001"
+        # Semesters 1-8: standard duration, late count = 0
+        self.assertEqual(get_late_semesters_count(student_id, "HK131"), 0)
+        self.assertEqual(get_late_semesters_count(student_id, "HK162"), 0)
+
+        # Semesters 9-12: allowed late semesters (1 to 4)
+        self.assertEqual(get_late_semesters_count(student_id, "HK171"), 1)
+        self.assertEqual(get_late_semesters_count(student_id, "HK172"), 2)
+        self.assertEqual(get_late_semesters_count(student_id, "HK181"), 3)
+        self.assertEqual(get_late_semesters_count(student_id, "HK182"), 4)
+
+        # Semester 13: exceeding 12 semesters (late count = 5)
+        self.assertEqual(get_late_semesters_count(student_id, "HK191"), 5)
+
+        # Unknown cohort returns 0
+        self.assertEqual(get_late_semesters_count("9910001", "HK191"), 0)
+
+    def test_academic_dismissal_logic(self):
+        student_id = "1310001"
+        # Semesters 1-12: NOT dismissed
+        for sem in ["HK131", "HK141", "HK151", "HK161", "HK162", "HK171", "HK172", "HK181", "HK182"]:
+            self.assertFalse(
+                is_academic_dismissal(student_id, sem),
+                f"Student should not be dismissed at {sem}",
+            )
+
+        # Semester 13+ (HK191 onward): Dismissed
+        self.assertTrue(is_academic_dismissal(student_id, "HK191"))
+        self.assertTrue(is_academic_dismissal(student_id, "HK192"))
+
+        # Dismissal trigger semester
+        self.assertEqual(get_academic_dismissal_semester(student_id), "HK191")
+        self.assertEqual(get_academic_dismissal_semester("1610001"), "HK221")
+        self.assertIsNone(get_academic_dismissal_semester("9910001"))
+
+        # academic_dismissal_semesters set filtering
+        sems = ["HK162", "HK182", "HK191", "HK192"]
+        self.assertEqual(
+            academic_dismissal_semesters(student_id, sems),
+            {"HK191", "HK192"},
+        )
+
+    def test_calculate_eligibility_blocks_dismissed_student(self):
+        students = pd.DataFrame([{
+            "student_id": "1310001",
+            "base_score": 7.0,
+            "voluntary_dropout_semester": "",
+            "english_pass": True,
+            "ctxh_days": 15,
+        }])
+        history = pd.DataFrame(columns=["student_id", "course_code", "status"])
+        credits = {"CO1001": 3}
+        prerequisites = pd.DataFrame(
+            columns=["course_code", "related_course_code", "relation_type"]
+        )
+        scheduled = {"13": ["CO1001"]}
+
+        # Semester 12 (HK182): Still eligible
+        eligible_12, _ = calculate_eligibility_for_schedule(
+            students,
+            history,
+            credits,
+            prerequisites,
+            {"13": []},
+            scheduled,
+            {"13": {}},
+            {"13": {}},
+            semester_code="HK182",
+        )
+        self.assertEqual(eligible_12["1310001"], ["CO1001"])
+
+        # Semester 13 (HK191): Exceeds 12 semesters -> blocked / dismissed
+        eligible_13, _ = calculate_eligibility_for_schedule(
+            students,
+            history,
+            credits,
+            prerequisites,
+            {"13": []},
+            scheduled,
+            {"13": {}},
+            {"13": {}},
+            semester_code="HK191",
+        )
+        self.assertEqual(eligible_13["1310001"], [])
+
+    def test_is_late_semester(self):
+        student_id = "1310001"
+        # Semesters 1-8: Not late (standard time)
+        for sem in ["HK131", "HK141", "HK151", "HK161", "HK162"]:
+            self.assertFalse(is_late_semester(student_id, sem))
+
+        # Semesters 9-12: Late within allowed window (1 to 4 late semesters)
+        for sem in ["HK171", "HK172", "HK181", "HK182"]:
+            self.assertTrue(is_late_semester(student_id, sem))
+
+        # Semester 13: Exceeds allowed window (>4 late semesters -> dismissed)
+        self.assertFalse(is_late_semester(student_id, "HK191"))
+
+    def test_config_contains_constants_and_validation(self):
+        progress = GENERATOR_CONFIG["student_progress"]
+        self.assertEqual(progress["graduation"]["max_late_semesters"], 4)
+        self.assertEqual(progress["electives"]["free_credit_limit"], 9)
+        self.assertEqual(progress["electives"]["group_c_credit_limit"], 15)
+        self.assertEqual(progress["enrollment_policy"]["optional_threshold"], 15)
+        self.assertEqual(progress["enrollment_policy"]["acceleration_base_score"], 8.0)
+
+        # Fallbacks in code
+        self.assertEqual(FREE_CREDIT_LIMIT, 9)
+        self.assertEqual(GROUP_C_CREDIT_LIMIT, 15)
+
+        # Validation checks
+        import copy
+        bad_config = copy.deepcopy(GENERATOR_CONFIG)
+        bad_config["student_progress"]["electives"]["free_credit_limit"] = -1
+        with self.assertRaisesRegex(ValueError, "Invalid electives configuration"):
+            validate_generator_config(bad_config)
+
+        bad_policy = copy.deepcopy(GENERATOR_CONFIG)
+        bad_policy["student_progress"]["enrollment_policy"]["acceleration_probability"] = 1.5
+        with self.assertRaisesRegex(ValueError, "Invalid enrollment policy configuration"):
+            validate_generator_config(bad_policy)
+
+    def test_custom_config_overrides_electives_and_acceleration(self):
+        import copy
+        custom_config = copy.deepcopy(GENERATOR_CONFIG)
+        # Raise acceleration score requirement to 9.5
+        custom_config["student_progress"]["enrollment_policy"]["acceleration_base_score"] = 9.5
+        # Student with score 8.5 does NOT get acceleration under this custom config
+        self.assertFalse(wants_acceleration("1310001", 8.5, custom_config))
 
 
 if __name__ == "__main__":

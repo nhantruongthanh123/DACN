@@ -15,6 +15,7 @@ from academic_rules import (  # noqa: E402
     PROFILE_OUTPUT_FILE,
     academic_suspension_semesters,
     get_exempted_english_courses,
+    is_academic_dismissal,
     semester_index,
 )
 
@@ -161,9 +162,6 @@ def _profile_graduation_state(
     graduation_semester = None
     if graduation_ready:
         for semester in semesters:
-            term_history = student_history[
-                student_history["semester_code"].eq(semester)
-            ]
             completed_through_term = student_history[
                 student_history["semester_index"].le(semester_index(semester))
                 & student_history["status"].astype(str).str.casefold().eq("pass")
@@ -177,7 +175,6 @@ def _profile_graduation_state(
                     "minimum_for_graduation"
                 ]
                 and english_pass
-                and term_history["final_score"].notna().any()
             ):
                 graduation_semester = semester
                 break
@@ -324,10 +321,7 @@ def _build_student_reports(profiles, history, semesters, tracked_ids, credits):
             observed_count += 1
             if academic_suspension:
                 continue
-            if (
-                semester_index_value - start_index
-                >= graduation_config["dismissal_after_semesters"]
-            ):
+            if is_academic_dismissal(student_id, semester, GENERATOR_CONFIG):
                 forced_semester = semester
                 forced_reason = "overdue_more_than_two_years"
                 break
