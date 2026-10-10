@@ -11,6 +11,7 @@ from academic_rules import (
     GENERATOR_CONFIG,
     get_exempted_english_courses,
     is_english_passed,
+    semester_from_index,
     semester_index,
 )
 CATALOG_DIR = ROOT_DIR / "data" / "catalog"
@@ -811,6 +812,61 @@ def summarize_cohort_results(cohort, print_report=True):
         filled = int(round(pct / 100 * length))
         return "█" * filled + "░" * (length - filled)
 
+    start_sem = GENERATOR_CONFIG["student_progress"]["cohort_start_semester"].get(
+        cohort_str.removeprefix("K")
+    )
+    start_idx = semester_index(start_sem) if start_sem else None
+    available_sems = get_available_semesters()
+    latest_idx = (
+        semester_index(available_sems[-1]) if available_sems else None
+    )
+    elapsed_semesters = (
+        latest_idx - start_idx + 1
+        if (start_idx is not None and latest_idx is not None)
+        else 0
+    )
+
+    late_by_semester = {}
+    if start_idx is not None:
+        for sem_num in (9, 10, 11, 12):
+            late_terms = sem_num - 8
+            term_idx = start_idx + sem_num - 1
+            sem_code = semester_from_index(term_idx)
+            has_occurred = (
+                (term_idx <= latest_idx) if latest_idx is not None else False
+            )
+            sub = (
+                late_df[late_df["graduation_semester"] == sem_code]
+                if (not late_df.empty and sem_code)
+                else pd.DataFrame()
+            )
+            cnt = len(sub)
+            c_rate = (cnt / n * 100) if n else 0.0
+            g_rate = (cnt / grad_count * 100) if grad_count else 0.0
+            l_rate = (cnt / late_count * 100) if late_count else 0.0
+            avg_gpa = (
+                float(sub["gpa_4"].mean())
+                if (cnt and "gpa_4" in sub and not sub["gpa_4"].dropna().empty)
+                else 0.0
+            )
+
+            late_by_semester[sem_num] = {
+                "semester_number": sem_num,
+                "semester_code": sem_code,
+                "late_terms": late_terms,
+                "count": cnt,
+                "cohort_rate": c_rate,
+                "grad_rate": g_rate,
+                "late_rate": l_rate,
+                "avg_gpa": avg_gpa,
+                "has_occurred": has_occurred,
+                "by_classification": (
+                    sub["degree_classification"].value_counts().to_dict()
+                    if cnt
+                    else {}
+                ),
+            }
+
     result = {
         "cohort": cohort_str,
         "total_students": total_cohort_size,
@@ -819,9 +875,11 @@ def summarize_cohort_results(cohort, print_report=True):
         "graduated_in_time": on_time_count,
         "graduated_on_time": on_time_count,
         "graduated_late": late_count,
+        "graduated_late_by_semester": late_by_semester,
         "graduated_early": early_count,
         "currently_studying": cont_count,
         "dropout_count": drop_count,
+        "late_by_semester": late_by_semester,
         "graduated": {
             "count": grad_count,
             "rate": grad_rate,
@@ -831,6 +889,7 @@ def summarize_cohort_results(cohort, print_report=True):
             "late_count": late_count,
             "late_cohort_rate": late_cohort_rate,
             "late_grad_rate": late_grad_rate,
+            "late_by_semester": late_by_semester,
             "early_count": early_count,
             "early_cohort_rate": early_cohort_rate,
             "early_grad_rate": early_grad_rate,
@@ -864,8 +923,20 @@ def summarize_cohort_results(cohort, print_report=True):
         print(f"Tổng số sinh viên theo dõi: {n} sinh viên\n")
         print(">>> CƠ CẤU TRẠNG THÁI HỌC VỤ <<<")
         print(f"  1. Đã tốt nghiệp (Graduated)         : {grad_count:>4} SV ({grad_rate:5.1f}%) [{ascii_bar(grad_rate)}]")
-        print(f"     - Tốt nghiệp đúng hạn (In time)   : {on_time_count:>4} SV ({on_time_cohort_rate:5.1f}% khóa | {on_time_grad_rate:5.1f}% số tốt nghiệp)")
+        print(f"     - Tốt nghiệp đúng hạn (Học kỳ 8)  : {on_time_count:>4} SV ({on_time_cohort_rate:5.1f}% khóa | {on_time_grad_rate:5.1f}% số tốt nghiệp)")
         print(f"     - Tốt nghiệp trễ hạn (Late)       : {late_count:>4} SV ({late_cohort_rate:5.1f}% khóa | {late_grad_rate:5.1f}% số tốt nghiệp)")
+        if late_by_semester and (late_count > 0 or elapsed_semesters > 8):
+            for sem_num in (9, 10, 11, 12):
+                item = late_by_semester[sem_num]
+                cnt = item["count"]
+                sem_code = item["semester_code"]
+                late_terms = item["late_terms"]
+                c_rate = item["cohort_rate"]
+                g_rate = item["grad_rate"]
+                if item["has_occurred"]:
+                    print(f"       + Học kỳ {sem_num:<2} (Trễ {late_terms} kỳ - {sem_code}) : {cnt:>4} SV ({c_rate:5.1f}% khóa | {g_rate:5.1f}% số tốt nghiệp)")
+                else:
+                    print(f"       + Học kỳ {sem_num:<2} (Trễ {late_terms} kỳ - {sem_code}) :    - SV (Chưa đến kỳ xét)")
         if early_count > 0:
             print(f"     - Tốt nghiệp sớm hạn (Early)      : {early_count:>4} SV ({early_cohort_rate:5.1f}% khóa | {early_grad_rate:5.1f}% số tốt nghiệp)")
         print(f"  2. Đang tiếp tục học (Current Study) : {cont_count:>4} SV ({cont_rate:5.1f}%) [{ascii_bar(cont_rate)}]")
@@ -877,17 +948,38 @@ def summarize_cohort_results(cohort, print_report=True):
         print(f"{'-'*82}")
         if grad_count > 0:
             print("  * Phân bổ tiến độ thời gian tốt nghiệp:")
-            print(f"    - Đúng hạn (In time / On-time) : {on_time_count:>4} SV ({on_time_grad_rate:5.1f}% SV tốt nghiệp)")
-            print(f"    - Trễ hạn (Late)               : {late_count:>4} SV ({late_grad_rate:5.1f}% SV tốt nghiệp)")
+            print(f"    - Đúng hạn (In time / Học kỳ 8) : {on_time_count:>4} SV ({on_time_grad_rate:5.1f}% SV tốt nghiệp)")
+            print(f"    - Trễ hạn tổng cộng (Late)      : {late_count:>4} SV ({late_grad_rate:5.1f}% SV tốt nghiệp)")
+            if late_by_semester and late_count > 0:
+                for sem_num in (9, 10, 11, 12):
+                    item = late_by_semester[sem_num]
+                    cnt = item["count"]
+                    sem_code = item["semester_code"]
+                    late_terms = item["late_terms"]
+                    g_rate = item["grad_rate"]
+                    l_rate = item["late_rate"]
+                    if item["has_occurred"]:
+                        print(f"      + Học kỳ {sem_num:<2} (Trễ {late_terms} kỳ - {sem_code}): {cnt:>4} SV ({g_rate:5.1f}% SV tốt nghiệp | {l_rate:5.1f}% SV trễ hạn)")
+                    else:
+                        print(f"      + Học kỳ {sem_num:<2} (Trễ {late_terms} kỳ - {sem_code}):    - SV (Chưa đến kỳ xét)")
             if early_count > 0:
-                print(f"    - Sớm hạn (Early)              : {early_count:>4} SV ({early_grad_rate:5.1f}% SV tốt nghiệp)")
+                print(f"    - Sớm hạn (Early)               : {early_count:>4} SV ({early_grad_rate:5.1f}% SV tốt nghiệp)")
 
             sem_grad = grad_df["graduation_semester"].value_counts().sort_index().to_dict()
             sem_parts = []
             for sem_k, sem_v in sem_grad.items():
-                sub_sem = grad_df[grad_df["graduation_semester"] == sem_k]
-                timings = sorted(sub_sem["graduation_timing"].unique())
-                t_lbl = "/".join(timings) if len(timings) else ""
+                if start_idx is not None:
+                    k_idx = semester_index(sem_k) - start_idx + 1
+                    if k_idx == 8:
+                        t_lbl = "kỳ 8 - on_time"
+                    elif k_idx > 8:
+                        t_lbl = f"kỳ {k_idx} - late, trễ {k_idx - 8} kỳ"
+                    else:
+                        t_lbl = f"kỳ {k_idx} - early"
+                else:
+                    sub_sem = grad_df[grad_df["graduation_semester"] == sem_k]
+                    timings = sorted(sub_sem["graduation_timing"].unique())
+                    t_lbl = "/".join(timings) if len(timings) else ""
                 sem_parts.append(f"{sem_k}: {sem_v} SV ({t_lbl})")
             print(f"  * Phân bổ theo học kỳ tốt nghiệp: {', '.join(sem_parts)}")
 
@@ -899,8 +991,24 @@ def summarize_cohort_results(cohort, print_report=True):
                 "average": "Trung bình",
                 "below_average": "Trung bình yếu",
             }
+            if late_count > 0 and late_by_semester:
+                print("  * Chi tiết tốt nghiệp trễ hạn theo từng kỳ (Điểm GPA & Xếp loại):")
+                for sem_num in (9, 10, 11, 12):
+                    item = late_by_semester[sem_num]
+                    if item["count"] > 0:
+                        sem_code = item["semester_code"]
+                        late_terms = item["late_terms"]
+                        cnt = item["count"]
+                        gpa_str = f"{item['avg_gpa']:.2f}" if item["avg_gpa"] > 0 else "-"
+                        cls_strs = [
+                            f"{cls_map.get(k, k)}: {v}"
+                            for k, v in item["by_classification"].items()
+                        ]
+                        cls_desc = ", ".join(cls_strs) if cls_strs else "-"
+                        print(f"    - Học kỳ {sem_num:<2} (Trễ {late_terms} kỳ - {sem_code}): {cnt:>3} SV | GPA TB: {gpa_str} | {cls_desc}")
+
             cls_counts = grad_df["degree_classification"].value_counts()
-            print("  * Phân loại xếp loại tốt nghiệp:")
+            print("  * Phân loại xếp loại tốt nghiệp (toàn khóa):")
             for cls_code, cnt in cls_counts.items():
                 lbl = cls_map.get(str(cls_code), str(cls_code))
                 print(f"    - {lbl:<25} ({cls_code}): {cnt:>4} SV ({(cnt/grad_count)*100:5.1f}%)")
@@ -996,5 +1104,87 @@ def summarize_cohort_results(cohort, print_report=True):
 
 view_cohort_status = summarize_cohort_results
 summarize_cohort_status = summarize_cohort_results
+
+
+def view_late_graduation_distribution(cohort, print_report=True):
+    """Phân tích chi tiết số lượng và xếp loại của sinh viên tốt nghiệp trễ hạn
+
+    theo từng học kỳ cụ thể (học kỳ 9, 10, 11, 12).
+    """
+    summary = summarize_cohort_results(cohort, print_report=False)
+    if not summary or not summary.get("has_metrics"):
+        if print_report:
+            print(f"[!] Không có dữ liệu học vụ cho khóa {cohort}.")
+        return None
+
+    cohort_str = summary["cohort"]
+    grad = summary["graduated"]
+    late_by_sem = summary.get("late_by_semester", {})
+    total = summary["total_students"]
+    grad_count = grad["count"]
+    late_count = grad["late_count"]
+    on_time_count = grad["on_time_count"]
+
+    if print_report:
+        print(f"\n{'='*82}")
+        print(f" PHÂN TÍCH TỐT NGHIỆP TRỄ HẠN THEO TỪNG KỲ (9-12) - KHÓA {cohort_str} ".center(82, "="))
+        print(f"{'='*82}")
+        print(f"Tổng số sinh viên khóa:       {total} sinh viên")
+        print(f"Tổng số sinh viên tốt nghiệp: {grad_count} SV ({grad['rate']:.1f}% khóa)")
+        print(f"  - Tốt nghiệp đúng hạn (Kỳ 8):  {on_time_count} SV ({grad['on_time_cohort_rate']:.1f}% khóa | {grad['on_time_grad_rate']:.1f}% SV tốt nghiệp)")
+        print(f"  - Tốt nghiệp trễ hạn (Kỳ 9-12): {late_count} SV ({grad['late_cohort_rate']:.1f}% khóa | {grad['late_grad_rate']:.1f}% SV tốt nghiệp)\n")
+
+        cls_map = {
+            "excellent": "Xuất sắc",
+            "very_good": "Giỏi",
+            "good": "Khá giỏi",
+            "fairly_good": "Khá",
+            "average": "Trung bình",
+            "below_average": "Trung bình yếu",
+        }
+
+        print(">>> CHI TIẾT TỪNG HỌC KỲ TRỄ HẠN (HỌC KỲ 9 -> 12) <<<")
+        for sem_num in (9, 10, 11, 12):
+            item = late_by_sem.get(sem_num, {})
+            sem_code = item.get("semester_code", f"Kỳ {sem_num}")
+            late_terms = item.get("late_terms", sem_num - 8)
+            cnt = item.get("count", 0)
+            c_rate = item.get("cohort_rate", 0.0)
+            g_rate = item.get("grad_rate", 0.0)
+            l_rate = item.get("late_rate", 0.0)
+            has_occurred = item.get("has_occurred", True)
+            avg_gpa = item.get("avg_gpa", 0.0)
+            by_cls = item.get("by_classification", {})
+
+            header = f"Học kỳ {sem_num} (Trễ {late_terms} kỳ - {sem_code})"
+            if not has_occurred:
+                print(f"  * {header:<35}: [Chưa đến kỳ xét / Chưa diễn ra]")
+                continue
+
+            print(f"  * {header:<35}: {cnt:>4} SV ({c_rate:5.1f}% khóa | {g_rate:5.1f}% tốt nghiệp | {l_rate:5.1f}% trễ hạn)")
+            if cnt > 0:
+                print(f"    - Điểm trung bình tích lũy GPA: {avg_gpa:.2f} / 4.00")
+                cls_parts = [
+                    f"{cls_map.get(k, k)}: {v} SV ({(v/cnt)*100:.1f}%)"
+                    for k, v in by_cls.items()
+                ]
+                print(f"    - Xếp loại tốt nghiệp: {', '.join(cls_parts)}")
+            else:
+                print(f"    - Không có sinh viên tốt nghiệp trong học kỳ này.")
+            print()
+
+        print(f"{'='*82}\n")
+
+    return {
+        "cohort": cohort_str,
+        "total_students": total,
+        "graduated_count": grad_count,
+        "late_count": late_count,
+        "on_time_count": on_time_count,
+        "late_by_semester": late_by_sem,
+    }
+
+
+analyze_late_graduations = view_late_graduation_distribution
 
 

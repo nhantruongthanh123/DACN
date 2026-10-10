@@ -22,7 +22,7 @@
     "social_activity": [0.05, 0.1, 0.35, 0.3, 0.2]
   },
   "academic": {
-    "distribution": [0.005, 0.155, 0.3, 0.49, 0.05],
+    "distribution": [0.015, 0.205, 0.3, 0.43, 0.05],
     "subject_sigma": 0.8,
     "subject_effect": 0.25,
     "base_scores": [4.0, 5.5, 6.5, 7.8, 9.0]
@@ -81,8 +81,8 @@
     "ctxh": {
       "minimum_for_thesis": 12,
       "minimum_for_graduation": 15,
-      "minimum_expected_days_per_semester": 1.2,
-      "maximum_expected_days_per_semester": 3.8,
+      "minimum_expected_days_per_semester": 1.0,
+      "maximum_expected_days_per_semester": 2.4,
       "personality_weights": {
         "discipline": 0.3,
         "motivation": 0.3,

@@ -5,8 +5,6 @@ HK162_SP1007_L03,SP1007,Pháp luật Việt Nam Đại cương,HK162,L03,1387855
 HK162_SP1007_L04,SP1007,Pháp luật Việt Nam Đại cương,HK162,L04,1395774,Đỗ Đức Khang
 HK162_CO4337_L01,CO4337,Đồ án Tốt nghiệp (Khoa học Máy tính),HK162,L01,1300746,Ngô Quốc An
 HK162_CO4337_L02,CO4337,Đồ án Tốt nghiệp (Khoa học Máy tính),HK162,L02,1324503,Phạm Ngọc Nam
-HK162_CO4337_L03,CO4337,Đồ án Tốt nghiệp (Khoa học Máy tính),HK162,L03,1332422,Hồ Khánh Trinh
-HK162_CO4337_L04,CO4337,Đồ án Tốt nghiệp (Khoa học Máy tính),HK162,L04,1340341,Bùi Hữu Trinh
 HK162_SP1039_L01,SP1039,Lịch sử Đảng Cộng sản Việt Nam,HK162,L01,1308665,Dương Đức Khôi
 HK162_SP1039_L02,SP1039,Lịch sử Đảng Cộng sản Việt Nam,HK162,L02,1356179,Lê Thanh Hải
 HK162_SP1039_L03,SP1039,Lịch sử Đảng Cộng sản Việt Nam,HK162,L03,1387855,Huỳnh Ngọc Khôi
@@ -31,6 +29,8 @@ HK162_CO3109_L02,CO3109,Thực tập Đồ án môn học Đa ngành - Hướng 
 HK162_CO3111_L01,CO3111,Thực tập Đồ án môn học Đa ngành - hướng Hệ thống Thông tin,HK162,L01,1300746,Ngô Quốc An
 HK162_CO3111_L02,CO3111,Thực tập Đồ án môn học Đa ngành - hướng Hệ thống Thông tin,HK162,L02,1324503,Phạm Ngọc Nam
 HK162_CH1003_L01,CH1003,Hóa đại cương,HK162,L01,1316584,Lý Hoàng Duy
+HK162_CH1003_L02,CH1003,Hóa đại cương,HK162,L02,1364098,Bùi Anh Hiếu
+HK162_CO2013_L01,CO2013,Hệ cơ sở Dữ liệu,HK162,L01,1300746,Ngô Quốc An
 HK162_CO3093_L01,CO3093,Mạng máy tính,HK162,L01,1300746,Ngô Quốc An
 HK162_MT2013_L01,MT2013,Xác suất và Thống kê,HK162,L01,1316584,Lý Hoàng Duy
 HK162_MT2013_L02,MT2013,Xác suất và Thống kê,HK162,L02,1364098,Bùi Anh Hiếu
@@ -85,6 +85,7 @@ HK162_PH1007_L02,PH1007,Thí nghiệm Vật lý,HK162,L02,1364098,Bùi Anh Hiế
 HK162_PH1007_L03,PH1007,Thí nghiệm Vật lý,HK162,L03,1372017,Dương Hữu Bảo
 HK162_PH1007_L04,PH1007,Thí nghiệm Vật lý,HK162,L04,1359126,Bùi Quang Hà
 HK162_PH1007_L05,PH1007,Thí nghiệm Vật lý,HK162,L05,1398721,Hoàng Khánh Long
+HK162_PH1007_L06,PH1007,Thí nghiệm Vật lý,HK162,L06,1338316,Lê Khánh Yến
 HK162_MI1003_L01,MI1003,Giáo dục Quốc phòng,HK162,L01,1308665,Dương Đức Khôi
 HK162_MI1003_L02,MI1003,Giáo dục Quốc phòng,HK162,L02,1356179,Lê Thanh Hải
 HK162_MI1003_L03,MI1003,Giáo dục Quốc phòng,HK162,L03,1387855,Huỳnh Ngọc Khôi
@@ -102,6 +103,7 @@ HK162_IM1021_L01,IM1021,Khởi nghiệp,HK162,L01,1300746,Ngô Quốc An
 HK162_IM1019_L01,IM1019,Tiếp thị căn bản,HK162,L01,1300746,Ngô Quốc An
 HK162_IM1019_L02,IM1019,Tiếp thị căn bản,HK162,L02,1324503,Phạm Ngọc Nam
 HK162_IM3047_L01,IM3047,Giao tiếp trong kinh doanh,HK162,L01,1300746,Ngô Quốc An
+HK162_IM3047_L02,IM3047,Giao tiếp trong kinh doanh,HK162,L02,1324503,Phạm Ngọc Nam
 HK162_ME4625_L01,ME4625,Kỹ năng lãnh đạo,HK162,L01,1300746,Ngô Quốc An
 HK162_CH4079_L01,CH4079,Hoá học xanh,HK162,L01,1316584,Lý Hoàng Duy
 HK162_E1013_L01,E1013,Khoa học trái đất,HK162,L01,1300746,Ngô Quốc An
@@ -149,10 +151,16 @@ HK162_CO4033_L01,CO4033,Phân tích Dữ liệu lớn và Trí tuệ Kinh doanh,
 HK162_CO4035_L01,CO4035,Hệ hoạch Định tài Nguyên tổ chức,HK162,L01,1300746,Ngô Quốc An
 HK162_CO4037_L01,CO4037,Hệ thống thông tin quản lý,HK162,L01,1300746,Ngô Quốc An
 HK162_CO4039_L01,CO4039,Bảo mật sinh trắc,HK162,L01,1300746,Ngô Quốc An
-HK162_SP1035_L01,SP1035,Chủ nghĩa Xã hội Khoa học,HK162,L01,1308665,Dương Đức Khôi
-HK162_LA1003_L01,LA1003,Anh văn 1,HK162,L01,1316584,Lý Hoàng Duy
 HK162_CO1005_L01,CO1005,Nhập môn Điện toán,HK162,L01,1300746,Ngô Quốc An
-HK162_MT1003_L01,MT1003,Giải tích 1,HK162,L01,1316584,Lý Hoàng Duy
 HK162_PH1003_L01,PH1003,Vật lý 1,HK162,L01,1316584,Lý Hoàng Duy
+HK162_SP1035_L01,SP1035,Chủ nghĩa Xã hội Khoa học,HK162,L01,1308665,Dương Đức Khôi
+HK162_CO1023_L01,CO1023,Hệ thống số,HK162,L01,1300746,Ngô Quốc An
+HK162_PE1003_L01,PE1003,Giáo dục thể chất 1,HK162,L01,1300746,Ngô Quốc An
+HK162_LA1003_L01,LA1003,Anh văn 1,HK162,L01,1316584,Lý Hoàng Duy
+HK162_SP1031_L01,SP1031,Triết học Mác - Lênin,HK162,L01,1308665,Dương Đức Khôi
+HK162_CO2007_L01,CO2007,Kiến trúc Máy tính,HK162,L01,1300746,Ngô Quốc An
+HK162_MT1003_L01,MT1003,Giải tích 1,HK162,L01,1316584,Lý Hoàng Duy
+HK162_CO3001_L01,CO3001,Công nghệ Phần mềm,HK162,L01,1300746,Ngô Quốc An
+HK162_CO2003_L01,CO2003,Cấu trúc Dữ liệu và Giải Thuật,HK162,L01,1300746,Ngô Quốc An
 HK162_CO4029_L01,CO4029,Đồ án Chuyên ngành,HK162,L01,1300746,Ngô Quốc An
 HK162_SP1037_L01,SP1037,Tư tưởng Hồ Chí Minh,HK162,L01,1308665,Dương Đức Khôi

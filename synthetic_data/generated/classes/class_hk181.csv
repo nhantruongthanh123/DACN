@@ -3,18 +3,17 @@ HK181_CO4029_L01,CO4029,Đồ án Chuyên ngành,HK181,L01,1300746,Ngô Quốc A
 HK181_CO4029_L02,CO4029,Đồ án Chuyên ngành,HK181,L02,1324503,Phạm Ngọc Nam
 HK181_CO4029_L03,CO4029,Đồ án Chuyên ngành,HK181,L03,1332422,Hồ Khánh Trinh
 HK181_CO4029_L04,CO4029,Đồ án Chuyên ngành,HK181,L04,1340341,Bùi Hữu Trinh
-HK181_CO4029_L05,CO4029,Đồ án Chuyên ngành,HK181,L05,1348260,Huỳnh Anh Nam
 HK181_CO4337_L01,CO4337,Đồ án Tốt nghiệp (Khoa học Máy tính),HK181,L01,1300746,Ngô Quốc An
 HK181_SP1037_L01,SP1037,Tư tưởng Hồ Chí Minh,HK181,L01,1308665,Dương Đức Khôi
 HK181_SP1037_L02,SP1037,Tư tưởng Hồ Chí Minh,HK181,L02,1356179,Lê Thanh Hải
 HK181_SP1037_L03,SP1037,Tư tưởng Hồ Chí Minh,HK181,L03,1387855,Huỳnh Ngọc Khôi
 HK181_SP1037_L04,SP1037,Tư tưởng Hồ Chí Minh,HK181,L04,1395774,Đỗ Đức Khang
-HK181_SP1037_L05,SP1037,Tư tưởng Hồ Chí Minh,HK181,L05,1362073,Dương Minh Tuấn
 HK181_SP1007_L01,SP1007,Pháp luật Việt Nam Đại cương,HK181,L01,1308665,Dương Đức Khôi
 HK181_CH1003_L01,CH1003,Hóa đại cương,HK181,L01,1316584,Lý Hoàng Duy
 HK181_CH1003_L02,CH1003,Hóa đại cương,HK181,L02,1364098,Bùi Anh Hiếu
 HK181_CH1003_L03,CH1003,Hóa đại cương,HK181,L03,1372017,Dương Hữu Bảo
 HK181_CH1003_L04,CH1003,Hóa đại cương,HK181,L04,1359126,Bùi Quang Hà
+HK181_CO2001_L01,CO2001,Kỹ năng Chuyên nghiệp cho Kỹ sư,HK181,L01,1300746,Ngô Quốc An
 HK181_CO2013_L01,CO2013,Hệ cơ sở Dữ liệu,HK181,L01,1300746,Ngô Quốc An
 HK181_CO2013_L02,CO2013,Hệ cơ sở Dữ liệu,HK181,L02,1324503,Phạm Ngọc Nam
 HK181_CO2013_L03,CO2013,Hệ cơ sở Dữ liệu,HK181,L03,1332422,Hồ Khánh Trinh
@@ -95,6 +94,7 @@ HK181_CO1023_L05,CO1023,Hệ thống số,HK181,L05,1348260,Huỳnh Anh Nam
 HK181_CO1023_L06,CO1023,Hệ thống số,HK181,L06,1379936,Lê Tuấn Nhi
 HK181_IM1013_L01,IM1013,Kinh tế học Đại cương,HK181,L01,1300746,Ngô Quốc An
 HK181_IM1011_L01,IM1011,Máy tính trong Kinh doanh,HK181,L01,1300746,Ngô Quốc An
+HK181_IM1011_L02,IM1011,Máy tính trong Kinh doanh,HK181,L02,1324503,Phạm Ngọc Nam
 HK181_IM1021_L01,IM1021,Khởi nghiệp,HK181,L01,1300746,Ngô Quốc An
 HK181_IM1019_L01,IM1019,Tiếp thị căn bản,HK181,L01,1300746,Ngô Quốc An
 HK181_IM3047_L01,IM3047,Giao tiếp trong kinh doanh,HK181,L01,1300746,Ngô Quốc An
@@ -145,11 +145,17 @@ HK181_CO4035_L01,CO4035,Hệ hoạch Định tài Nguyên tổ chức,HK181,L01,
 HK181_CO4037_L01,CO4037,Hệ thống thông tin quản lý,HK181,L01,1300746,Ngô Quốc An
 HK181_CO4039_L01,CO4039,Bảo mật sinh trắc,HK181,L01,1300746,Ngô Quốc An
 HK181_MI1003_L01,MI1003,Giáo dục Quốc phòng,HK181,L01,1308665,Dương Đức Khôi
+HK181_CO1007_L01,CO1007,Cấu trúc Rời rạc cho Khoa học Máy tính,HK181,L01,1300746,Ngô Quốc An
 HK181_PH1007_L01,PH1007,Thí nghiệm Vật lý,HK181,L01,1316584,Lý Hoàng Duy
+HK181_CO1027_L01,CO1027,Kỹ thuật Lập trình,HK181,L01,1300746,Ngô Quốc An
 HK181_LA1005_L01,LA1005,Anh văn 2,HK181,L01,1316584,Lý Hoàng Duy
-HK181_CO2039_L01,CO2039,Lập trình Nâng cao,HK181,L01,1300746,Ngô Quốc An
+HK181_CO2017_L01,CO2017,Hệ điều hành,HK181,L01,1300746,Ngô Quốc An
+HK181_MT1007_L01,MT1007,Đại số Tuyến tính,HK181,L01,1316584,Lý Hoàng Duy
 HK181_SP1033_L01,SP1033,Kinh tế Chính trị Mác - Lênin,HK181,L01,1308665,Dương Đức Khôi
+HK181_CO2039_L01,CO2039,Lập trình Nâng cao,HK181,L01,1300746,Ngô Quốc An
+HK181_CO3111_L01,CO3111,Thực tập Đồ án môn học Đa ngành - hướng Hệ thống Thông tin,HK181,L01,1300746,Ngô Quốc An
 HK181_CO3109_L01,CO3109,Thực tập Đồ án môn học Đa ngành - Hướng công Nghệ phần mềm,HK181,L01,1300746,Ngô Quốc An
 HK181_SP1039_L01,SP1039,Lịch sử Đảng Cộng sản Việt Nam,HK181,L01,1308665,Dương Đức Khôi
-HK181_CO3107_L01,CO3107,Thực tập Đồ án môn học Đa ngành - Hướng Trí tuệ Nhân tạo,HK181,L01,1300746,Ngô Quốc An
 HK181_PE1005_L01,PE1005,Giáo dục thể chất 2,HK181,L01,1300746,Ngô Quốc An
+HK181_CO3005_L01,CO3005,Nguyên lý Ngôn ngữ Lập trình,HK181,L01,1300746,Ngô Quốc An
+HK181_CO3107_L01,CO3107,Thực tập Đồ án môn học Đa ngành - Hướng Trí tuệ Nhân tạo,HK181,L01,1300746,Ngô Quốc An
