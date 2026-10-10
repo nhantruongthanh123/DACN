@@ -62,17 +62,17 @@ class AcademicMetricsTests(unittest.TestCase):
         late_k13 = res_k13["graduated"]["late_by_semester"]
         self.assertEqual(list(late_k13.keys()), [9, 10, 11, 12])
         self.assertEqual(late_k13[9]["count"], 18)
-        self.assertEqual(late_k13[10]["count"], 159)
+        self.assertEqual(late_k13[10]["count"], 157)
         self.assertEqual(late_k13[11]["count"], 47)
         self.assertEqual(late_k13[12]["count"], 33)
         total_late = sum(late_k13[k]["count"] for k in [9, 10, 11, 12])
         self.assertEqual(total_late, res_k13["graduated"]["late_count"])
-        self.assertEqual(total_late, 257)
+        self.assertEqual(total_late, 255)
 
         # Test dedicated late report function
         late_res = view_late_graduation_distribution("K13", print_report=False)
         self.assertIsNotNone(late_res)
-        self.assertEqual(late_res["late_count"], 257)
+        self.assertEqual(late_res["late_count"], 255)
         self.assertEqual(late_res["late_by_semester"][9]["semester_code"], "HK171")
         self.assertEqual(late_res["late_by_semester"][10]["semester_code"], "HK172")
         self.assertEqual(late_res["late_by_semester"][11]["semester_code"], "HK181")

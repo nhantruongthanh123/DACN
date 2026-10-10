@@ -162,7 +162,10 @@ def _profile_graduation_state(
 
     graduation_semester = None
     if graduation_ready:
+        student_id_val = str(profile.get("student_id", getattr(profile, "name", "")))
         for semester in semesters:
+            if is_academic_dismissal(student_id_val, semester, GENERATOR_CONFIG):
+                break
             completed_through_term = student_history[
                 student_history["semester_index"].le(semester_index(semester))
                 & student_history["status"].astype(str).str.casefold().eq("pass")
@@ -358,7 +361,16 @@ def _build_student_reports(profiles, history, semesters, tracked_ids, credits):
         dropped_out = exit_semester is not None
         graduation_semester = details["graduation_semester"]
         if dropped_out and graduation_semester:
-            if semester_index(graduation_semester) <= semester_index(
+            if dropout_reason == "overdue_more_than_two_years":
+                if semester_index(graduation_semester) < semester_index(
+                    exit_semester
+                ):
+                    dropped_out = False
+                    dropout_reason = ""
+                    exit_semester = None
+                else:
+                    graduation_semester = None
+            elif semester_index(graduation_semester) <= semester_index(
                 exit_semester
             ):
                 dropped_out = False

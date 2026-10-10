@@ -514,6 +514,8 @@ def _generate_ctxh_progress(student_id, profile, config):
     cumulative_days = 0
     progress = []
     for semester in semesters:
+        if is_academic_dismissal(student_id, semester, config):
+            break
         rng = np.random.default_rng(
             _stable_seed(student_id, config, f"ctxh:{semester}")
         )
